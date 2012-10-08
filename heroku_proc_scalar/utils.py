@@ -6,6 +6,7 @@ from celery.task.control import inspect
 from celery import current_app as celery
 # Ensure built-in tasks are loaded for task_list view
 import os
+import time
 import heroku
 import logging
 logger = logging.getLogger(__name__)
@@ -16,6 +17,7 @@ uses_netloc.append('redis')
 
 HEROKU_API_KEY = os.environ.get('HEROKU_API_KEY', False)
 HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
+HEROKU_SCALAR_SHUTDOWN_RETRY = os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 1000)
 
 if not HEROKU_API_KEY:
     logger.warning("HEROKU_API_KEY not set")
@@ -107,6 +109,10 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
                         count += 1
                 if count > 0:
                     status_line += "%s=%d    " % (hostname, count)
+            if counter % HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
+                if still_up == 0:
+                    print "Shutdown of %s taking too long, re-issuing" % hostname
+                    celery.control.broadcast('shutdown', destination=[hostname])
 
         if still_up == 0:
             print "\n============================================================\nAll processes are now marked as crashed\n"
@@ -115,6 +121,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
             if len(status_line) > status_str_length:
                 status_str_length = len(status_line) + 1 + len(str(counter))
             print "\r%s %d".ljust(status_str_length) % (status_line, counter),
+            #play nice to heroku api
+            time.sleep(1)
 
     print "\n"
     #Now scale down...
