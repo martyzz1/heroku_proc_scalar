@@ -16,7 +16,7 @@ add the following to your django settings
 
 If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
 
-    urlpatterns += patterns(r'^', include('heroku_proc_scalar.urls'))
+    urlpatterns += patterns('', url(r'^', include('heroku_proc_scalar.urls')))
 
 Environment settings
 ====================
