@@ -18,3 +18,18 @@ If you wish to allow the heroku_proc_scalar_app to remote scale your celery proc
 
     urlpatterns += patterns(r'^', include('heroku_proc_scalar.urls'))
 
+Environment settings
+====================
+
+HEROKU_API_KEY  
+--------------
+Set your Heroku API Key as a config Variable inside your app
+
+    heroku config:set HEROKU_API_KEY=<your key> --app <your appname>
+
+HEROKU_APPNAME
+--------------
+Create a config key specifying the name of your app. This is so that the heroku.py api can be used internally to remote control you processes
+
+    heroku config:set HEROKU_APPNAME=<your appname>
+
