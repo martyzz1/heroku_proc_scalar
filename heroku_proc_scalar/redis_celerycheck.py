@@ -3,6 +3,7 @@ from urlparse import urlparse, uses_netloc
 import redis
 from pprint import pprint
 from django.conf import settings
+from celery.app import current_app as current_celery
 from celery.bin.celeryd import WorkerCommand
 
 uses_netloc.append('redis')
@@ -15,7 +16,7 @@ queue = redis.StrictRedis(
       password=redis_queue_url.password
     )
 
-w = WorkerCommand()
+w = WorkerCommand(app=current_celery())
 pprint(w)
 
 print "worker namespace = %s" % w.hostname
