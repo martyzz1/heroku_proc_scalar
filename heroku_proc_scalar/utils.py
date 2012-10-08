@@ -109,7 +109,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
                     status_line += "%s=%d    " % (hostname, count)
 
         if still_up == 0:
-            print "\n============================================================ All processes are now marked as crashed\n"
+            print "\n============================================================\nAll processes are now marked as crashed\n"
             wait_confirm_shutdown = False
         else:
             if len(status_line) > status_str_length:
