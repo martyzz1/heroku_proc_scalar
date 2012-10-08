@@ -1,5 +1,5 @@
 from fabric.api import task
-from . import shutdown_celery_processes
+from .utils import shutdown_celery_processes
 
 
 @task
