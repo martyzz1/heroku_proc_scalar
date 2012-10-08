@@ -18,8 +18,9 @@ queue = redis.StrictRedis(
 
 w = WorkerCommand(app=current_celery())
 pprint(w)
+for x in w.get_options():
+    print x
 
-print "worker namespace = %s" % w.hostname
 DISABLE_CELERY = queue.get('DISABLE_CELERY')
 if DISABLE_CELERY and DISABLE_CELERY != '0':
     print "Celery disabled for %s exiting..." % DISABLE_CELERY
