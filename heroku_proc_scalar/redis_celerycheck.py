@@ -16,7 +16,6 @@ queue = redis.StrictRedis(
 
 w = Worker()
 print "worker hostname = %s" % w.hostname
-print "worker queues = %s" % pprint(w.Queues())
 print "worker namespace = %s" % w.Namespace().name
 DISABLE_CELERY = queue.get('DISABLE_CELERY')
 if DISABLE_CELERY and DISABLE_CELERY != '0':
