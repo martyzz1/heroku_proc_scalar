@@ -33,3 +33,27 @@ Create a config key specifying the name of your app. This is so that the heroku.
 
     heroku config:set HEROKU_APPNAME=<your appname>
 
+PROCFILE (optional)
+--------
+You can use this Environment variable to specify the Procfile you use for your system. In this way you local dev environment could use a different Procfile, and the you could set
+
+    heroku config:set PROCFILE=./Procfile.dev
+
+It defaults to './Procfile'
+
+Procfile
+========
+
+In order to use the heroku_proc_scalar you must configure your celery processes in the following way
+The rules of thumb are
+    1. Your procname must be assigned a worker hostname via the -n option which is identical to your procname
+    2. You *must* use the -Q, or --queues option to specify which queues your Proc handles
+    3. You *must* use the -I  heroku_proc_scalar.redis_celerycheck for each proc you wish to manage
+
+e.g.
+
+    <procname>: python manage.py celeryd -E --loglevel=DEBUG -n <procname> --queues default -I heroku_proc_scalar.redis_celerycheck
+
+i.e.
+    
+    celery_default: python manage.py celeryd -E --loglevel=DEBUG -n celery_default --queues default -I heroku_proc_scalar.redis_celerycheck
