@@ -16,8 +16,7 @@ queue = redis.StrictRedis(
     )
 
 w = WorkerCommand()
-for x in w.get_options():
-    print "worker %s" % x
+pprint(w)
 
 print "worker namespace = %s" % w.hostname
 DISABLE_CELERY = queue.get('DISABLE_CELERY')
