@@ -1,6 +1,7 @@
 import sys
 from urlparse import urlparse, uses_netloc
 import redis
+from pprint import pprint
 from django.conf import settings
 from celery.apps.worker import Worker
 uses_netloc.append('redis')
