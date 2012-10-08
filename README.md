@@ -14,7 +14,7 @@ add the following to your django settings
 
     INSTALLED_APPS.append('heroku_proc_scalar')
 
-If you wish to allow the heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
+If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
 
     urlpatterns += patterns(r'^', include('heroku_proc_scalar.urls'))
 
