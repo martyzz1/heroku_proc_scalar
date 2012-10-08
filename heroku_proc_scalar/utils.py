@@ -146,7 +146,7 @@ def get_redis_queue_count(active_queues):
     )
 
     if not active_queues:
-        print "[WARN] no active queues data given"
+        #print "[WARN] no active queues data given"
         active_queues = {}
 
     data = {}
