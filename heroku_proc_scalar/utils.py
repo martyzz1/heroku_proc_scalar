@@ -2,13 +2,13 @@ from django.conf import settings
 from urlparse import urlparse, uses_netloc
 from . import PROC_MAP, CONTROL_APP
 import redis
-#import time
 from celery.task.control import inspect
 from celery import current_app as celery
-from pprint import pprint
 # Ensure built-in tasks are loaded for task_list view
 import os
 import heroku
+import logging
+logger = logging.getLogger(__name__)
 
 from celery.app.control import Control
 
@@ -17,8 +17,11 @@ uses_netloc.append('redis')
 HEROKU_API_KEY = os.environ.get('HEROKU_API_KEY', False)
 HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
 
-assert(HEROKU_API_KEY)
-assert(HEROKU_APPNAME)
+if not HEROKU_API_KEY:
+    logger.warning("HEROKU_API_KEY not set")
+
+if not HEROKU_APPNAME:
+    logger.warning("HEROKU_APPNAME not set")
 
 
 def scale_me_down():
