@@ -35,7 +35,7 @@ Create a config key specifying the name of your app. This is so that the heroku.
 
 PROCFILE (optional)
 --------
-You can use this Environment variable to specify the Procfile you use for your system. In this way you local dev environment could use a different Procfile, and the you could set
+You can use this Environment variable to specify the Procfile you use for your system. In this way your local dev environment could use a different Procfile, and then you could set
 
     heroku config:set PROCFILE=./Procfile.dev
 
