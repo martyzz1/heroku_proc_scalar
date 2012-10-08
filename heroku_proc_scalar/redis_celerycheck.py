@@ -3,7 +3,8 @@ from urlparse import urlparse, uses_netloc
 import redis
 from pprint import pprint
 from django.conf import settings
-from celery.apps.worker import Worker
+from celery.bin.celeryd import WorkerCommand
+
 uses_netloc.append('redis')
 
 redis_queue_url = urlparse(settings.BROKER_URL)
@@ -14,9 +15,11 @@ queue = redis.StrictRedis(
       password=redis_queue_url.password
     )
 
-w = Worker()
-print "worker hostname = %s" % w.hostname
-print "worker namespace = %s" % w.Namespace().name
+w = WorkerCommand()
+for x in w.get_options():
+    print "worker %s" % x
+
+print "worker namespace = %s" % w.hostname
 DISABLE_CELERY = queue.get('DISABLE_CELERY')
 if DISABLE_CELERY and DISABLE_CELERY != '0':
     print "Celery disabled for %s exiting..." % DISABLE_CELERY
