@@ -59,13 +59,6 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
       password=redis_queue_url.password
     )
 
-    is_already_disabled = queue.get('DISABLE_CELERY')
-    if not for_deployment == is_already_disabled:
-        if is_already_disabled == 'deployment':
-            print "Celery already marked as shutdown for deployment - nothing to do"
-            return
-
-    queue.set('DISABLE_CELERY', for_deployment)
     c = Control()
     #pprint(worker_hostnames)
     if not len(worker_hostnames) > 0:
@@ -79,13 +72,26 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     #pprint(worker_hostnames)
 
     worker_hostnames = list(set(worker_hostnames))
+    worker_hostnames_to_process = []
 
     for hostname in worker_hostnames:
+        is_already_disabled = queue.get('DISABLE_CELERY_%' % hostname)
+        if not for_deployment == is_already_disabled:
+            if is_already_disabled == 'deployment':
+                print "Celery process %s already marked as shutdown for deployment - nothing to do" % hostname
+            else:
+                worker_hostnames_to_process.append(hostname)
+        else:
+            worker_hostnames_to_process.append(hostname)
+
         queue.set('DISABLE_CELERY_%s' % hostname, 1)
         print "Shutting down %s" % hostname
         #celery.control.broadcast('shutdown', destination=[hostname])
 
-    celery.control.broadcast('shutdown', destination=worker_hostnames)
+    if len(worker_hostnames_to_process) > 0:
+        celery.control.broadcast('shutdown', destination=worker_hostnames_to_process)
+    else:
+        return
 
     wait_confirm_shutdown = True
     print "\n\n=========================================================\nWaiting for all the following celery workers to end gracefully (reach a state of crashed),\n this may take some time if they were currently running tasks....\n"
@@ -95,7 +101,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         counter += 1
         still_up = 0
         status_line = ''
-        for hostname in worker_hostnames:
+        for hostname in worker_hostnames_to_process:
             try:
                 processes = heroku_app.processes[hostname]
             except KeyError:
@@ -126,11 +132,9 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 
     print "\n"
     #Now scale down...
-    for hostname in worker_hostnames:
+    for hostname in worker_hostnames_to_process:
         disable_dyno(heroku_conn, heroku_app, hostname)
         queue.set('DISABLE_CELERY_%s' % hostname, 0)
-
-    queue.set('DISABLE_CELERY', 0)
 
 
 def disable_dyno(heroku_conn, heroku_app, procname):
@@ -182,11 +186,6 @@ def get_redis_queue_count(active_queues):
 def get_active_queues():
     i = inspect()
     active = i.active()
-    active_queues = i.active_queues()
-    #print "active_queues===================================\n\n"
-    #pprint(active_queues)
-    #print "active===================================\n\n"
-    #pprint(active)
     data = {}
     if active:
         for queuename in active.iterkeys():
