@@ -117,7 +117,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
                 if count > 0:
                     status_line += "%s=%d    " % (hostname, count)
             if counter % HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
-                if still_up == 0:
+                if still_up == 1:
                     print "Shutdown of %s taking too long, re-issuing" % hostname
                     celery.control.broadcast('shutdown', destination=[hostname])
 
