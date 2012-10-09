@@ -20,13 +20,7 @@ queue = redis.StrictRedis(
       password=redis_queue_url.password
     )
 
-w = WorkerCommand(app=current_celery())
-pprint(current_celery.config_from_cmdline())
-pprint(w)
-options = w.get_options()
-print options.hostname
-
-DISABLE_CELERY = queue.get('DISABLE_CELERY')
+DISABLE_CELERY = queue.get('DISABLE_CELERY_%s' % CELERY_HOSTNAME)
 if DISABLE_CELERY and DISABLE_CELERY != '0':
     print "Celery disabled for %s exiting..." % DISABLE_CELERY
     sys.exit(0)
