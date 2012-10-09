@@ -47,16 +47,17 @@ PROCFILE
 In order to use the heroku_proc_scalar you must configure your celery processes in the following way.
 The rules of thumb are
     1. Your procname must be assigned a worker hostname via the -n option which is identical to your procname
-    2. You *must* use the -Q, or --queues option to specify which queues your Proc handles
-    3. You *must* use the -I  heroku_proc_scalar.redis_celerycheck for each proc you wish to manage
+    2. You must specify an env variable of CELERY_HOSTNAME which has the same value you used in 1. for each process
+    3. You *must* use the -Q, or --queues option to specify which queues your Proc handles
+    4. You *must* use the -I  heroku_proc_scalar.redis_celerycheck for each proc you wish to manage
 
 e.g.
 
-    <procname>: python manage.py celeryd -E --loglevel=DEBUG -n <procname> --queues default -I heroku_proc_scalar.redis_celerycheck
+    <procname>: env CELERY_HOSTNAME=<procname> python manage.py celeryd -E --loglevel=DEBUG -n <procname> --queues default -I heroku_proc_scalar.redis_celerycheck
 
 i.e.
     
-    celery_default: python manage.py celeryd -E --loglevel=DEBUG -n celery_default --queues default -I heroku_proc_scalar.redis_celerycheck
+    celery_default: CELERY_HOSTNAME=celery_default python manage.py celeryd -E --loglevel=DEBUG -n celery_default --queues default -I heroku_proc_scalar.redis_celerycheck
 
 
 N.B. Using this code to control celery process on a local dev branch is NOT supported, as the whole point of this is to use heroku's api to control heroku instances.  The PROCFILE env var is simply a conveniance to aid in some elements of debug, testing and development.
