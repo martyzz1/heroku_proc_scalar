@@ -17,7 +17,7 @@ uses_netloc.append('redis')
 
 HEROKU_API_KEY = os.environ.get('HEROKU_API_KEY', False)
 HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
-HEROKU_SCALAR_SHUTDOWN_RETRY = os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10)
+HEROKU_SCALAR_SHUTDOWN_RETRY = int(os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10))
 
 if not HEROKU_API_KEY:
     logger.warning("HEROKU_API_KEY not set")
