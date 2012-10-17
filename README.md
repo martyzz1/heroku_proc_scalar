@@ -46,6 +46,7 @@ PROCFILE
 
 In order to use the heroku_proc_scalar you must configure your celery processes in the following way.
 The rules of thumb are
+
     1. Your procname must be assigned a worker hostname via the -n option which is identical to your procname
     2. You must specify an env variable of CELERY_HOSTNAME which has the same value you used in 1. for each process
     3. You *must* use the -Q, or --queues option to specify which queues your Proc handles
