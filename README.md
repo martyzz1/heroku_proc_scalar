@@ -3,6 +3,18 @@ heroku-proc-scalar
 
 Django code side proc scalar
 
+
+Synopsis
+========
+This code basically provides 2 pieces of functionlity
+
+    1. Fab tasks to safely shutdown your Celery worker processes, bypassing Heroku's built in 10s SIGKILL 
+    2. a json response providing some investigation of your celery worker processes current status. This is used by the heroku_proc_scalar_app to determine what actions to take for your app.
+
+
+Usage
+=====
+
 To use add the following line to you requirements.txt
 
     -e git://github.com/martyzz1/heroku_proc_scalar.py.git@HEAD#egg=heroku_proc_scalar
@@ -17,6 +29,10 @@ add the following to your django settings
 If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
 
     urlpatterns += patterns('', url(r'^', include('heroku_proc_scalar.urls')))
+
+You must also add the included fab commands to your main app's fabfile.py
+
+    from heroku_proc_scalar.fabfile import shutdown_celery_process, shutdown_celery_process_for_deployment
 
 Environment settings
 ====================
