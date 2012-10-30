@@ -92,7 +92,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     if len(worker_hostnames_to_process) > 0:
         celery.control.broadcast('shutdown', destination=worker_hostnames_to_process)
     else:
-        return
+        return []
 
     wait_confirm_shutdown = True
     print "\n\n=========================================================\nWaiting for all the following celery workers to end gracefully (reach a state of crashed),\n this may take some time if they were currently running tasks....\n"
@@ -137,6 +137,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         disable_dyno(heroku_conn, heroku_app, hostname)
         queue.set('DISABLE_CELERY_%s' % hostname, 0)
 
+    return worker_hostnames_to_process
+
 
 def disable_dyno(heroku_conn, heroku_app, procname):
     #appname = HEROKU_APPNAME
@@ -148,6 +150,27 @@ def disable_dyno(heroku_conn, heroku_app, procname):
         #this means the prc isn't running - bug in heroku api methinks
         # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
         #heroku_conn._http_resource(method='POST', resource=('apps', appname, 'ps', 'scale'), data={'type': procname, 'qty': 0})
+        #print "[WARN] if you see lots of these its likely there is a problem, but this could be caused by 2 processes trying to scale down the dyno's at the same time, the first one wins, this current process lost, i.e. the dyno was already gone"
+        pass
+
+
+def start_dynos(proclist):
+    heroku_conn = heroku.from_key(HEROKU_API_KEY)
+    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+
+    for proc in proclist:
+        start_dyno(heroku_conn, heroku_app, proc)
+
+
+def start_dyno(heroku_conn, heroku_app, procname):
+
+    print "starting dyno %s" % procname
+    try:
+        heroku_app.processes[procname].scale(1)
+    except KeyError:
+        #this means the prc isn't running - bug in heroku api methinks
+        # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
+        heroku_conn._http_resource(method='POST', resource=('apps', appname, 'ps', 'scale'), data={'type': procname, 'qty': 1})
         #print "[WARN] if you see lots of these its likely there is a problem, but this could be caused by 2 processes trying to scale down the dyno's at the same time, the first one wins, this current process lost, i.e. the dyno was already gone"
         pass
 
