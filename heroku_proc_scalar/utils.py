@@ -45,6 +45,19 @@ def scale_me_down():
     print "\n\n=============Finished scaling down\n\n"
 
 
+def get_running_processes():
+
+    c = Control()
+    worker_hostnames = []
+    #print "[WARNING] No worker procnames given. I will shutdown ALL celery worker processes"
+    hostnames = c.ping()
+    for h in hostnames:
+        for host, y in h.iteritems():
+            worker_hostnames.append(host)
+
+    return worker_hostnames
+
+
 def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 #N.B. worker_hostname is set by -n variable in Procfile and MUST MUST MUST
 #be identical to the process name. Break this and all is lost()

@@ -1,5 +1,5 @@
 from fabric.api import task
-from .utils import shutdown_celery_processes, start_dynos
+from .utils import shutdown_celery_processes, start_dynos, get_running_processes
 
 
 @task
@@ -18,3 +18,11 @@ def shutdown_celery_process_for_deployment():
 def restart_processes(*worker_hostnames):
 
     return start_dynos(worker_hostnames)
+
+
+@task
+def print_running_processes():
+
+    proclist = get_running_processes()
+    list = ",".join(proclist)
+    print list
