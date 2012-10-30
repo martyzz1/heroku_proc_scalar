@@ -183,7 +183,7 @@ def start_dyno(heroku_conn, heroku_app, procname):
     except KeyError:
         #this means the prc isn't running - bug in heroku api methinks
         # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
-        heroku_conn._http_resource(method='POST', resource=('apps', appname, 'ps', 'scale'), data={'type': procname, 'qty': 1})
+        heroku_conn._http_resource(method='POST', resource=('apps', HEROKU_APPNAME, 'ps', 'scale'), data={'type': procname, 'qty': 1})
         #print "[WARN] if you see lots of these its likely there is a problem, but this could be caused by 2 processes trying to scale down the dyno's at the same time, the first one wins, this current process lost, i.e. the dyno was already gone"
         pass
 
