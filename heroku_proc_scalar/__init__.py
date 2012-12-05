@@ -14,6 +14,7 @@ def get_queue_maps():
     queuemaps = {}
     e = re.compile("(\w+):.+(--queues|-Q)\s+(\w[\w,\s]*)")
     c = re.compile("(\w+):.+bin\/celery_shutdown.py")
+    print "Opening procfile %x\n" % PROCFILE
     f = open(PROCFILE)
     lines = f.readlines()
     f.close()
