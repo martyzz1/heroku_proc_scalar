@@ -14,14 +14,14 @@ def get_queue_maps():
     queuemaps = {}
     e = re.compile("(\w+):.+(--queues|-Q)\s+(\w[\w,\s]*)")
     c = re.compile("(\w+):.+bin\/celery_shutdown.py")
-    print "Opening procfile %s\n" % PROCFILE
+    #print "Opening procfile %s\n" % PROCFILE
     f = open(PROCFILE)
     lines = f.readlines()
     f.close()
     got_match = 0
     control_app = ''
     for data in lines:
-        print data
+        #print data
         match = e.search(data)
         if match:
             proc = match.group(1)
