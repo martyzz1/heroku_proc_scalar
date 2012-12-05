@@ -21,7 +21,7 @@ def get_queue_maps():
     got_match = 0
     control_app = ''
     for data in lines:
-        #print data
+        print data
         match = e.search(data)
         if match:
             proc = match.group(1)
