@@ -17,7 +17,7 @@ Usage
 
 To use add the following line to you requirements.txt
 
-    -e git://github.com/martyzz1/heroku_proc_scalar.py.git@HEAD#egg=heroku_proc_scalar
+    -e git://github.com/martyzz1/heroku_proc_scalar.git@HEAD#egg=heroku_proc_scalar
 
 N.B. feel free to pick a specific commit point rather than HEAD
 
