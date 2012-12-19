@@ -8,8 +8,8 @@ from celery import current_app as celery
 import os
 import time
 import heroku
-import logging
-logger = logging.getLogger(__name__)
+#import logging
+#logger = logging.getLogger(__name__)
 
 from celery.app.control import Control
 
@@ -20,10 +20,10 @@ HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
 HEROKU_SCALAR_SHUTDOWN_RETRY = int(os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10))
 
 if not HEROKU_API_KEY:
-    logger.warning("HEROKU_API_KEY not set")
+    print "HEROKU_API_KEY not set"
 
 if not HEROKU_APPNAME:
-    logger.warning("HEROKU_APPNAME not set")
+    print "HEROKU_APPNAME not set"
 
 
 def scale_me_down():
