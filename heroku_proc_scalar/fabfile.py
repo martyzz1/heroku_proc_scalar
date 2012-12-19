@@ -25,7 +25,7 @@ def restart_processes(*worker_hostnames):
 def print_running_processes():
 
     proclist = get_running_processes()
-    list = []
+    lists = []
 
     r = re.compile("^(\w+)$", re.M)
 
@@ -35,5 +35,5 @@ def print_running_processes():
         else:
             match = r.finditer(line)
             if match:
-                list.append(match[0])
-    print ",".join(list)
+                lists.append(match[0])
+    print ",".join(lists)
