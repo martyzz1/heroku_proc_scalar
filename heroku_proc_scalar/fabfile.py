@@ -26,4 +26,4 @@ def print_running_processes():
     proclist = get_running_processes()
     list = ",".join(proclist)
 
-    print list
+    print "PROCLIST={0}".format(list)
