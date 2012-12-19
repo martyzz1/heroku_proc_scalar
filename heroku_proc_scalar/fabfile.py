@@ -28,7 +28,8 @@ def print_running_processes():
     for line in proclist:
         if 'No handlers could be found ' in line:
             continue
-        elif line.startswith(' '):
+        elif len(line) <= 0:
             continue
-        list += ",{0}".format(list)
+        else:
+            list += ",{0}".format(list)
     print list

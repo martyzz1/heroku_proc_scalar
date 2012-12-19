@@ -49,7 +49,6 @@ def get_running_processes():
 
     c = Control()
     worker_hostnames = []
-    #print "[WARNING] No worker procnames given. I will shutdown ALL celery worker processes"
     hostnames = c.ping()
     for h in hostnames:
         for host, y in h.iteritems():
