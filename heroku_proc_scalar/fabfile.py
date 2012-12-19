@@ -27,7 +27,7 @@ def print_running_processes():
     proclist = get_running_processes()
     list = ''
 
-    r = re.compile("^(\w+)", re.M)
+    r = re.compile("^(\w+)$", re.M)
 
     for line in proclist:
         if 'No handlers could be found ' in line:
@@ -35,5 +35,5 @@ def print_running_processes():
         else:
             match = r.finditer(line)
             if match:
-                list += ",{0}".format(line)
+                list += ",{0}".format(match[0])
     print list
