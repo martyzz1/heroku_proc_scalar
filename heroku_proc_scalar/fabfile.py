@@ -24,5 +24,9 @@ def restart_processes(*worker_hostnames):
 def print_running_processes():
 
     proclist = get_running_processes()
-    list = ",".join(proclist)
+    list = ''
+    for line in proclist:
+        if 'No handlers could be found ' in line:
+            continue
+        list += ",{0}".format(list)
     print list
