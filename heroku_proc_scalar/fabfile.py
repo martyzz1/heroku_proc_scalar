@@ -1,5 +1,6 @@
 from fabric.api import task
 from .utils import shutdown_celery_processes, start_dynos, get_running_processes
+import re
 
 
 @task
@@ -25,11 +26,14 @@ def print_running_processes():
 
     proclist = get_running_processes()
     list = ''
+
+    r = re.compile("^\w")
+
     for line in proclist:
         if 'No handlers could be found ' in line:
             continue
-        elif len(line) <= 0:
-            continue
         else:
-            list += ",{0}".format(list)
+            match = r.finditer(line)
+            if match:
+                list += ",{0}".format(list)
     print list
