@@ -9,7 +9,7 @@ import os
 
 uses_netloc.append('redis')
 
-CELERY_HOSTNAME = os.environ.get('CELERY_HOSTNAME',False)
+CELERY_HOSTNAME = os.environ.get('CELERY_HOSTNAME', False)
 assert(CELERY_HOSTNAME)
 
 redis_queue_url = urlparse(settings.BROKER_URL)
@@ -19,6 +19,8 @@ queue = redis.StrictRedis(
       db=int(redis_queue_url.path[1:]),
       password=redis_queue_url.password
     )
+
+print "Using BROKER_URL of %s" % settings.BROKER_URL
 
 DISABLE_CELERY = queue.get('DISABLE_CELERY_%s' % CELERY_HOSTNAME)
 if DISABLE_CELERY and DISABLE_CELERY != '0':
