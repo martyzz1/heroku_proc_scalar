@@ -69,7 +69,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 #We therefore can use procname and worker_hostname interchangeably
     heroku_conn = heroku.from_key(HEROKU_API_KEY)
     heroku_app = heroku_conn.apps[HEROKU_APPNAME]
-    redis_queue_url = urlparse(settings.BROKER_URL)
+    redis_queue_url = urlparse(settings.PROC_SCALAR_DB)
     queue = redis.StrictRedis(
       host=redis_queue_url.hostname,
       port=int(redis_queue_url.port),
