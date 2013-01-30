@@ -50,6 +50,7 @@ def get_running_processes():
 
     c = Control()
     worker_hostnames = []
+    hostnames = []
     try:
         hostnames = c.ping()
     except HTTPException:
