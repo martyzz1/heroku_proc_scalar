@@ -1,6 +1,7 @@
 from django.conf import settings
 from urlparse import urlparse, uses_netloc
 from . import PROC_MAP, CONTROL_APP
+from httplib import HTTPException
 import redis
 from celery.task.control import inspect
 from celery import current_app as celery
@@ -49,7 +50,11 @@ def get_running_processes():
 
     c = Control()
     worker_hostnames = []
-    hostnames = c.ping()
+    try:
+        hostnames = c.ping()
+    except HTTPException:
+        pass
+
     for h in hostnames:
         for host, y in h.iteritems():
             worker_hostnames.append(host)
