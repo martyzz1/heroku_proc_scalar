@@ -12,7 +12,7 @@ uses_netloc.append('redis')
 CELERY_HOSTNAME = os.environ.get('CELERY_HOSTNAME', False)
 assert(CELERY_HOSTNAME)
 
-redis_queue_url = urlparse(settings.BROKER_URL)
+redis_queue_url = urlparse(settings.PROC_SCALAR_DB)
 queue = redis.StrictRedis(
       host=redis_queue_url.hostname,
       port=int(redis_queue_url.port),
@@ -20,7 +20,7 @@ queue = redis.StrictRedis(
       password=redis_queue_url.password
     )
 
-print "Using BROKER_URL of %s" % settings.BROKER_URL
+print "Using BROKER_URL of %s" % settings.PROC_SCALAR_DB
 
 DISABLE_CELERY = queue.get('DISABLE_CELERY_%s' % CELERY_HOSTNAME)
 if DISABLE_CELERY and DISABLE_CELERY != '0':
