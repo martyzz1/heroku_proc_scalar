@@ -82,7 +82,11 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     if not len(worker_hostnames) > 0:
         worker_hostnames = []
         #print "[WARNING] No worker procnames given. I will shutdown ALL celery worker processes"
-        hostnames = c.ping()
+        hostnames = []
+        try:
+            hostnames = c.ping()
+        except HTTPException:
+            pass
         for h in hostnames:
             for host, y in h.iteritems():
                 worker_hostnames.append(host)
