@@ -247,23 +247,23 @@ def get_ironmq_queue_count(active_queues):
         details = {}
         try:
             details = queue.getQueueDetails(queuename)
+            pprint(details)
+            length = details["size"]
         except HTTPException:
-            continue
+            length = 0
 
-        pprint(details)
-        length = details["size"]
         print "count %s = %s" % (queuename, length)
         print "queuename = %s" % queuename
         print "procname = %s" % procname
         print "active %s = %s" % (queuename, active_queues[procname])
 
-    if not procname in data:
-        data[procname] = {'count': length, 'active': 0}
-    else:
-        data[procname]['count'] += length
+        if not procname in data:
+            data[procname] = {'count': length, 'active': 0}
+        else:
+            data[procname]['count'] += length
 
-    if procname in active_queues:
-        data[procname]['active'] += active_queues[procname]
+        if procname in active_queues:
+            data[procname]['active'] += active_queues[procname]
 
     return data
 
