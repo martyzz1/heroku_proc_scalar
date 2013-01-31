@@ -244,7 +244,12 @@ def get_ironmq_queue_count(active_queues):
 
     for queuename, procname in PROC_MAP.iteritems():
         from pprint import pprint
-        info = queue.getQueueDetails(queuename)
+        info = {}
+        try:
+            info = queue.getQueueDetails(queuename)
+        except HTTPException:
+            pass
+
         pprint(info)
         length = queue["size"]
         print "count %s = %s" % (queuename, length)
