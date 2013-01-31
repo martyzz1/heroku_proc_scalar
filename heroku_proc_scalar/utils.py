@@ -9,6 +9,7 @@ from celery import current_app as celery
 import os
 import time
 import heroku
+from iron_mq import IronMQ
 #import logging
 #logger = logging.getLogger(__name__)
 
@@ -69,13 +70,6 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 #We therefore can use procname and worker_hostname interchangeably
     heroku_conn = heroku.from_key(HEROKU_API_KEY)
     heroku_app = heroku_conn.apps[HEROKU_APPNAME]
-    redis_queue_url = urlparse(settings.PROC_SCALAR_DB)
-    queue = redis.StrictRedis(
-      host=redis_queue_url.hostname,
-      port=int(redis_queue_url.port),
-      db=int(redis_queue_url.path[1:]),
-      password=redis_queue_url.password
-    )
 
     c = Control()
     #pprint(worker_hostnames)
@@ -98,7 +92,9 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 
     for hostname in worker_hostnames:
         key = "DISABLE_CELERY_%s" % hostname
-        is_already_disabled = queue.get(key)
+        is_already_disabled = ''
+        if key in heroku_app.config:
+            is_already_disabled = heroku_app.config[key]
         if not for_deployment == is_already_disabled:
             if is_already_disabled == 'deployment':
                 print "Celery process %s already marked as shutdown for deployment - nothing to do" % hostname
@@ -107,7 +103,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         else:
             worker_hostnames_to_process.append(hostname)
 
-        queue.set(key, for_deployment)
+        heroku_app.config[key] = for_deployment
         print "Shutting down %s" % hostname
         #celery.control.broadcast('shutdown', destination=[hostname])
 
@@ -157,7 +153,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     #Now scale down...
     for hostname in worker_hostnames_to_process:
         disable_dyno(heroku_conn, heroku_app, hostname)
-        queue.set('DISABLE_CELERY_%s' % hostname, 0)
+        key = 'DISABLE_CELERY_%s' % hostname
+        del heroku_app.config[key]
 
     return worker_hostnames_to_process
 
@@ -225,6 +222,43 @@ def get_redis_queue_count(active_queues):
 
         if procname in active_queues:
             data[procname]['active'] += active_queues[procname]
+
+    return data
+
+
+def get_ironmq_queue_count(active_queues):
+    IRON_MQ_PROJECT_ID = settings.IRON_MQ_PROJECT_ID
+    IRON_MQ_TOKEN = settings.IRON_MQ_TOKEN
+    IRON_MQ_HOST = settings.IRON_MQ_HOST
+
+    assert(IRON_MQ_PROJECT_ID)
+    assert(IRON_MQ_TOKEN)
+    assert(IRON_MQ_HOST)
+
+    queue = IronMQ(host=IRON_MQ_HOST, project_id=IRON_MQ_PROJECT_ID, token=IRON_MQ_TOKEN)
+    if not active_queues:
+        print "[WARN] no active_queues data given"
+        active_queues = {}
+
+    data = {}
+
+    for queuename, procname in PROC_MAP.iteritems():
+        from pprint import pprint
+        info = queue.getQueueDetails(queuename)
+        pprint(info)
+        length = queue["size"]
+        print "count %s = %s" % (queuename, length)
+        print "queuename = %s" % queuename
+        print "procname = %s" % procname
+        print "active %s = %s" % (queuename, active_queues[procname])
+
+    if not procname in data:
+        data[procname] = {'count': length, 'active': 0}
+    else:
+        data[procname]['count'] += length
+
+    if procname in active_queues:
+        data[procname]['active'] += active_queues[procname]
 
     return data
 
