@@ -265,8 +265,12 @@ def get_ironmq_queue_count(active_queues):
 
 def get_active_queues():
     i = inspect()
-    active = i.active()
+    active = {}
     data = {}
+    try:
+        active = i.active()
+    except HTTPException:
+        pass
     if active:
         for queuename in active.iterkeys():
             length = len(active[queuename])
