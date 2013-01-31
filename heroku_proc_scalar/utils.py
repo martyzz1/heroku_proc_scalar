@@ -20,6 +20,7 @@ uses_netloc.append('redis')
 HEROKU_API_KEY = os.environ.get('HEROKU_API_KEY', False)
 HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
 HEROKU_SCALAR_SHUTDOWN_RETRY = int(os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10))
+proc_scalar_lock_db = urlparse(settings.PROC_SCALAR_DB)
 
 if not HEROKU_API_KEY:
     print "HEROKU_API_KEY not set"
@@ -71,6 +72,13 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     heroku_conn = heroku.from_key(HEROKU_API_KEY)
     heroku_app = heroku_conn.apps[HEROKU_APPNAME]
 
+    lock = redis.StrictRedis(
+        host=proc_scalar_lock_db.hostname,
+        port=int(proc_scalar_lock_db.port),
+        db=int(proc_scalar_lock_db.path[1:]),
+        password=proc_scalar_lock_db.password
+    ) 
+
     c = Control()
     #pprint(worker_hostnames)
     if not len(worker_hostnames) > 0:
@@ -92,9 +100,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 
     for hostname in worker_hostnames:
         key = "DISABLE_CELERY_%s" % hostname
-        is_already_disabled = 0
-        if key in heroku_app.config.data:
-            is_already_disabled = heroku_app.config.data[key]
+        is_already_disabled = queue.get(key)
         if not for_deployment == is_already_disabled:
             if is_already_disabled == 'deployment':
                 print "Celery process %s already marked as shutdown for deployment - nothing to do" % hostname
@@ -103,7 +109,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         else:
             worker_hostnames_to_process.append(hostname)
 
-        heroku_app.config[key] = for_deployment
+        lock.set(key, for_deployment)
         print "Shutting down %s" % hostname
         #celery.control.broadcast('shutdown', destination=[hostname])
 
@@ -154,7 +160,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     for hostname in worker_hostnames_to_process:
         disable_dyno(heroku_conn, heroku_app, hostname)
         key = 'DISABLE_CELERY_%s' % hostname
-        del heroku_app.config[key]
+        lock.set('DISABLE_CELERY_%s' % hostname, 0)
+
 
     return worker_hostnames_to_process
 

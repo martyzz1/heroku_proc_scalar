@@ -1,22 +1,25 @@
 import sys
+from urlparse import urlparse, uses_netloc
+import redis
+from django.conf import settings
 import os
-import heroku
 
-CELERY_HOSTNAME = os.environ.get('CELERY_HOSTNAME', None)
+uses_netloc.append('redis')
+
+CELERY_HOSTNAME = os.environ.get('CELERY_HOSTNAME', False)
 assert(CELERY_HOSTNAME)
 
-HEROKU_API_KEY = os.environ.get('HEROKU_API_KEY', None)
-HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', None)
+proc_scalar_lock_db = urlparse(settings.PROC_SCALAR_DB)
+lock = redis.StrictRedis(
+      host=proc_scalar_lock_db.hostname,
+      port=int(proc_scalar_lock_db.port),
+      db=int(proc_scalar_lock_db.path[1:]),
+      password=proc_scalar_lock_db.password
+    )
 
-heroku_conn = heroku.from_key(HEROKU_API_KEY)
-heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+print "Using BROKER_URL of %s" % settings.PROC_SCALAR_DB
 
-
-key = 'DISABLE_CELERY_%s' % CELERY_HOSTNAME
-DISABLE_CELERY = None
-if key in heroku_app.config.data:
-    DISABLE_CELERY = heroku_app.config.data[key]
-
+DISABLE_CELERY = lock.get('DISABLE_CELERY_%s' % CELERY_HOSTNAME)
 if DISABLE_CELERY and DISABLE_CELERY != '0':
     print "Celery disabled for %s exiting..." % DISABLE_CELERY
     sys.exit(0)
