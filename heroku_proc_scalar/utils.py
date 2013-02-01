@@ -100,7 +100,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 
     for hostname in worker_hostnames:
         key = "DISABLE_CELERY_%s" % hostname
-        is_already_disabled = queue.get(key)
+        is_already_disabled = lock.get(key)
         if not for_deployment == is_already_disabled:
             if is_already_disabled == 'deployment':
                 print "Celery process %s already marked as shutdown for deployment - nothing to do" % hostname
