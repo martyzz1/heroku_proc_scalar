@@ -5,6 +5,7 @@ from httplib import HTTPException
 import redis
 from celery.task.control import inspect
 from celery import current_app as celery
+from pprint import pprint
 # Ensure built-in tasks are loaded for task_list view
 import os
 import time
@@ -50,7 +51,6 @@ def scale_me_down():
 
 def get_running_processes():
 
-    from pprint import pprint
     c = Control()
     worker_hostnames = []
     hostnames = []
@@ -73,8 +73,8 @@ def get_running_processes():
 def get_celery_worker_status():
     ERROR_KEY = "ERROR"
     try:
-        from celery.task.control import inspect
         insp = inspect()
+        pprint(insp)
         d = insp.stats()
         if not d:
             d = {ERROR_KEY: 'No running Celery workers were found.'}
@@ -84,6 +84,8 @@ def get_celery_worker_status():
         if len(e.args) > 0 and errorcode.get(e.args[0]) == 'ECONNREFUSED':
             msg += ' Check that the RabbitMQ server is running.'
         d = {ERROR_KEY: msg}
+    except HTTPException as e:
+        d = {ERROR_KEY: str(e)}
     except ImportError as e:
         d = {ERROR_KEY: str(e)}
     return d
