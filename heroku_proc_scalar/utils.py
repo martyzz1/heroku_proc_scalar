@@ -56,8 +56,11 @@ def get_running_processes():
     try:
         hostnames = c.ping()
     except HTTPException:
+        print "Looks like we had an exception to the c.ping()"
         pass
 
+    from pprint import pprint
+    pprint(hostnames)
     for h in hostnames:
         for host, y in h.iteritems():
             worker_hostnames.append(host)
@@ -77,7 +80,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         port=int(proc_scalar_lock_db.port),
         db=int(proc_scalar_lock_db.path[1:]),
         password=proc_scalar_lock_db.password
-    ) 
+    )
 
     c = Control()
     #pprint(worker_hostnames)
@@ -161,7 +164,6 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         disable_dyno(heroku_conn, heroku_app, hostname)
         key = 'DISABLE_CELERY_%s' % hostname
         lock.set('DISABLE_CELERY_%s' % hostname, 0)
-
 
     return worker_hostnames_to_process
 
