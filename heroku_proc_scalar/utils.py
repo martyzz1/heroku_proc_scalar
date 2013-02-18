@@ -303,6 +303,8 @@ def get_ironmq_queue_count(active_queues):
 
 def get_active_queues():
     i = inspect()
+    d = i.stats()
+    pprint(d)
     active = {}
     data = {}
     try:
