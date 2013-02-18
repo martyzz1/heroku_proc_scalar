@@ -10,6 +10,7 @@ from pprint import pprint
 import os
 import time
 import heroku
+import iron_celery
 from iron_mq import IronMQ
 #import logging
 #logger = logging.getLogger(__name__)
@@ -58,6 +59,7 @@ def get_running_processes():
         hostnames = c.ping()
     except HTTPException:
         print "Looks like we had an exception to the c.ping()"
+        #celery.worker.control.active_queues
         d = get_celery_worker_status()
         pprint(d)
         pass
