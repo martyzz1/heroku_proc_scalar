@@ -310,7 +310,7 @@ def get_active_queues():
     data = {}
     try:
         active = i.active()
-    except requests.HTTPError as e:
+    except requests.exceptions.HTTPError as e:
         print "Exception HTTPError %s " % e
     except HTTPException:
         pass
