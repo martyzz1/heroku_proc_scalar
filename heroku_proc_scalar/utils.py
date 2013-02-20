@@ -11,6 +11,7 @@ import os
 import time
 import heroku
 import iron_celery
+import requests.exceptions.HTTPError
 from iron_mq import IronMQ
 #import logging
 #logger = logging.getLogger(__name__)
@@ -309,6 +310,8 @@ def get_active_queues():
     data = {}
     try:
         active = i.active()
+    except requests.exceptions.HTTPError as e:
+        print "Exception HTTPError %s " % e
     except HTTPException:
         pass
     if active:
