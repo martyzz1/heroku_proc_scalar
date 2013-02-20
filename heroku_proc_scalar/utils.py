@@ -61,6 +61,7 @@ def get_running_processes():
     except (HTTPException, requests.exceptions.HTTPError) as e:
         print "Looks like we had an exception to the c.ping()"
         print "Exception %s " % e
+        print "Exception %s " % e.response()
         pprint(e)
         #celery.worker.control.active_queues
         d = get_celery_worker_status()
