@@ -58,20 +58,14 @@ def get_running_processes():
     hostnames = []
     try:
         hostnames = c.ping()
-    except requests.exceptions.HTTPError as e:
-        print "Exception Occurred HTTPError %s " % e
-        print "Content %s " % e.read()
-    except requests.HTTPError as e:
-        print "Exception1 HTTPError %s " % e
-    except HTTPException:
+    except (HTTPException, requests.exceptions.HTTPError) as e:
         print "Looks like we had an exception to the c.ping()"
+        print "Exception %s " % e
+        pprint(e)
         #celery.worker.control.active_queues
         d = get_celery_worker_status()
         pprint(d)
         pass
-    except Exception as e:
-        print "Exception Catchall %s " % e
-        raise
 
     pprint(hostnames)
     for h in hostnames:
@@ -95,7 +89,7 @@ def get_celery_worker_status():
         if len(e.args) > 0 and errorcode.get(e.args[0]) == 'ECONNREFUSED':
             msg += ' Check that the RabbitMQ server is running.'
         d = {ERROR_KEY: msg}
-    except HTTPException as e:
+    except (HTTPException, requests.exceptions.HTTPError) as e:
         d = {ERROR_KEY: str(e)}
     except ImportError as e:
         d = {ERROR_KEY: str(e)}
@@ -124,7 +118,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         hostnames = []
         try:
             hostnames = c.ping()
-        except HTTPException:
+        except (HTTPException, requests.exceptions.HTTPError) as e:
             pass
         for h in hostnames:
             for host, y in h.iteritems():
@@ -292,7 +286,7 @@ def get_ironmq_queue_count(active_queues):
             details = queue.getQueueDetails(queuename)
             pprint(details)
             length = details["size"]
-        except HTTPException:
+        except (HTTPException, requests.exceptions.HTTPError) as e:
             length = 0
 
         print "count %s = %s" % (queuename, length)
@@ -318,13 +312,9 @@ def get_active_queues():
     data = {}
     try:
         active = i.active()
-    except requests.exceptions.HTTPError as e:
+    except (HTTPException, requests.exceptions.HTTPError) as e:
         print "Exception HTTPError %s " % e
-    except HTTPException:
         pass
-    except Exception as e:
-        print "Exception Catchall %s " % e
-        raise
     if active:
         for queuename in active.iterkeys():
             length = len(active[queuename])
