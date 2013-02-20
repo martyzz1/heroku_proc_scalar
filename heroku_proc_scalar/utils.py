@@ -59,7 +59,8 @@ def get_running_processes():
     try:
         hostnames = c.ping()
     except requests.exceptions.HTTPError as e:
-        print "Exception1 HTTPError %s " % e
+        print "Exception Occurred HTTPError %s " % e
+        print "Content %s " % e.read()
     except requests.HTTPError as e:
         print "Exception1 HTTPError %s " % e
     except HTTPException:
