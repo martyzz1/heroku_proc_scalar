@@ -314,6 +314,9 @@ def get_active_queues():
         print "Exception HTTPError %s " % e
     except HTTPException:
         pass
+    except Exception as e:
+        print "Exception HTTPError %s " % e
+        raise
     if active:
         for queuename in active.iterkeys():
             length = len(active[queuename])
