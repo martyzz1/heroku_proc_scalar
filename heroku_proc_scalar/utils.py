@@ -58,12 +58,19 @@ def get_running_processes():
     hostnames = []
     try:
         hostnames = c.ping()
+    except requests.exceptions.HTTPError as e:
+        print "Exception1 HTTPError %s " % e
+    except requests.HTTPError as e:
+        print "Exception1 HTTPError %s " % e
     except HTTPException:
         print "Looks like we had an exception to the c.ping()"
         #celery.worker.control.active_queues
         d = get_celery_worker_status()
         pprint(d)
         pass
+    except Exception as e:
+        print "Exception Catchall %s " % e
+        raise
 
     pprint(hostnames)
     for h in hostnames:
@@ -315,7 +322,7 @@ def get_active_queues():
     except HTTPException:
         pass
     except Exception as e:
-        print "Exception HTTPError %s " % e
+        print "Exception Catchall %s " % e
         raise
     if active:
         for queuename in active.iterkeys():
