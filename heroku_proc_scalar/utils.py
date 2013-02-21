@@ -84,8 +84,17 @@ def get_running_celery_workers():
 
     procs = heroku_app.processes
     for proc in procs:
+        #'app_name', 'slug', 'command', 'upid', 'process', 'action', 'rendezvous_url', 'pretty_state', 'state'
         print "%s\n" % proc
-        pprint(proc)
+        print "     app_name = %s\n" % proc.app_name
+        print "     slug = %s\n" % proc.slug
+        print "     command = %s\n" % proc.command
+        print "     upid = %s\n" % proc.upid
+        print "     process = %s\n" % proc.process
+        print "     action = %s\n" % proc.action
+        print "     rendezvous_url = %s\n" % proc.rendezvous_url
+        print "     pretty_state = %s\n" % proc.pretty_state
+        print "     state = %s\n" % proc.state
 
 
 def get_celery_worker_status():
