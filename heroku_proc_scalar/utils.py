@@ -85,6 +85,7 @@ def get_running_celery_workers():
     procs = heroku_app.processes
     for proc in procs:
         print "%s\n" % proc
+        pprint(proc)
 
 
 def get_celery_worker_status():
