@@ -1,4 +1,4 @@
-from pprint import pprint
+#from pprint import pprint
 import re
 import os
 
@@ -59,5 +59,5 @@ def get_proc_maps(queue_map):
 QUEUE_MAP, CONTROL_APP = get_queue_maps()
 PROC_MAP = get_proc_maps(QUEUE_MAP)
 
-pprint(PROC_MAP)
-pprint(QUEUE_MAP)
+#pprint(PROC_MAP)
+#pprint(QUEUE_MAP)

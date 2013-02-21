@@ -77,6 +77,16 @@ def get_running_processes():
     return worker_hostnames
 
 
+def get_running_celery_workers():
+
+    heroku_conn = heroku.from_key(HEROKU_API_KEY)
+    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+
+    procs = heroku_app.processes
+    for proc in procs:
+        print "%s\n" % proc
+
+
 def get_celery_worker_status():
     ERROR_KEY = "ERROR"
     try:

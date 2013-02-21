@@ -1,5 +1,5 @@
 from fabric.api import task
-from .utils import shutdown_celery_processes, start_dynos, get_running_processes
+from .utils import shutdown_celery_processes, start_dynos, get_running_processes, get_running_celery_workers
 
 
 @task
@@ -23,6 +23,7 @@ def restart_processes(*worker_hostnames):
 @task
 def print_running_processes():
 
+    get_running_celery_workers()
     proclist = get_running_processes()
     list = ",".join(proclist)
 
