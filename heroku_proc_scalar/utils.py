@@ -68,6 +68,7 @@ def get_running_processes():
         pprint(d)
         pass
 
+    print "Hostnames are:-\n"
     pprint(hostnames)
     for h in hostnames:
         for host, y in h.iteritems():
@@ -80,6 +81,7 @@ def get_celery_worker_status():
     ERROR_KEY = "ERROR"
     try:
         insp = inspect()
+        print "inspect is :-\n"
         pprint(insp)
         d = insp.stats()
         if not d:
