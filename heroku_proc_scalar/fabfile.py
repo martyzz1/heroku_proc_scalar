@@ -23,8 +23,8 @@ def restart_processes(*worker_hostnames):
 @task
 def print_running_processes():
 
-    get_running_celery_workers()
-    proclist = get_running_processes()
+    proclist = get_running_celery_workers()
+    #proclist = get_running_processes()
     list = ",".join(proclist)
 
     print "PROCLIST={0}".format(list)
