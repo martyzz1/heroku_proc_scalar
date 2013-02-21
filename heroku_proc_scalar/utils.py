@@ -1,6 +1,6 @@
 from django.conf import settings
 from urlparse import urlparse, uses_netloc
-from . import PROC_MAP, CONTROL_APP
+from . import PROC_MAP, CONTROL_APP, QUEUE_MAP
 from httplib import HTTPException
 import redis
 from celery.task.control import inspect
