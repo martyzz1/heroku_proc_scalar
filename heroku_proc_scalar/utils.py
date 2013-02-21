@@ -85,12 +85,13 @@ def get_running_celery_workers():
     procs = heroku_app.processes
     workers = []
     pprint(PROC_MAP)
+    pprint(QUEUE_MAP)
     for proc in procs:
         #'app_name', 'slug', 'command', 'upid', 'process', 'action', 'rendezvous_url', 'pretty_state', 'state'
         print "proc = %s\n" % proc
         procname, trash = proc.process.split('.')
         print "      procname = %s\n" % procname
-        if procname in PROC_MAP:
+        if procname in QUEUE_MAP:
             workers.append(procname)
 
     return workers
