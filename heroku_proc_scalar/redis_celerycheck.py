@@ -17,7 +17,7 @@ lock = redis.StrictRedis(
       password=proc_scalar_lock_db.password
     )
 
-print "Using BROKER_URL of %s" % settings.PROC_SCALAR_DB
+print "Using LOCKDB of %s" % settings.PROC_SCALAR_DB
 
 DISABLE_CELERY = lock.get('DISABLE_CELERY_%s' % CELERY_HOSTNAME)
 if DISABLE_CELERY and DISABLE_CELERY != '0':
