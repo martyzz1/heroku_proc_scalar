@@ -51,32 +51,6 @@ def scale_me_down():
     print "\n\n=============Finished scaling down\n\n"
 
 
-def get_running_processes():
-
-    c = Control()
-    worker_hostnames = []
-    hostnames = []
-    try:
-        hostnames = c.ping()
-    except (HTTPException, requests.exceptions.HTTPError) as e:
-        print "Looks like we had an exception to the c.ping()"
-        print "Exception %s " % e
-        print "Exception %s " % e.response()
-        pprint(e)
-        #celery.worker.control.active_queues
-        d = get_celery_worker_status()
-        pprint(d)
-        pass
-
-    print "Hostnames are:-\n"
-    pprint(hostnames)
-    for h in hostnames:
-        for host, y in h.iteritems():
-            worker_hostnames.append(host)
-
-    return worker_hostnames
-
-
 def get_running_celery_workers():
 
     heroku_conn = heroku.from_key(HEROKU_API_KEY)
@@ -84,13 +58,9 @@ def get_running_celery_workers():
 
     procs = heroku_app.processes
     workers = []
-    pprint(PROC_MAP)
-    pprint(QUEUE_MAP)
     for proc in procs:
         #'app_name', 'slug', 'command', 'upid', 'process', 'action', 'rendezvous_url', 'pretty_state', 'state'
-        print "proc = %s\n" % proc
         procname, trash = proc.process.split('.')
-        print "      procname = %s\n" % procname
         if procname in QUEUE_MAP:
             workers.append(procname)
 
