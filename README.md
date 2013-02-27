@@ -25,11 +25,11 @@ N.B. feel free to pick a specific commit point rather than HEAD
 add the following to your django settings
 
     INSTALLED_APPS.append('heroku_proc_scalar')
-    PROC_SCALAR_DB = '<a redis db url to use for communication of shutdown messages>'
+    PROC_SCALAR_LOCK_DB = '<a redis db url to use for communication of shutdown messages>'
         e.g.
-    PROC_SCALAR_DB = os.environ.get('REDIS_CONTENTDB_URL')
+    PROC_SCALAR_LOCK_DB = os.environ.get('REDIS_CONTENTDB_URL')
         or
-    PROC_SCALAR_DB = 'redis://redis.dev.local:6379/0'
+    PROC_SCALAR_LOCK_DB = 'redis://redis.dev.local:6379/0'
 
 If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
 
