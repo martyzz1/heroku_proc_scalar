@@ -67,26 +67,26 @@ def get_running_celery_workers():
     return workers
 
 
-def get_celery_worker_status():
-    ERROR_KEY = "ERROR"
-    try:
-        insp = inspect()
-        print "inspect is :-\n"
-        pprint(insp)
-        d = insp.stats()
-        if not d:
-            d = {ERROR_KEY: 'No running Celery workers were found.'}
-    except IOError as e:
-        from errno import errorcode
-        msg = "Error connecting to the backend: " + str(e)
-        if len(e.args) > 0 and errorcode.get(e.args[0]) == 'ECONNREFUSED':
-            msg += ' Check that the RabbitMQ server is running.'
-        d = {ERROR_KEY: msg}
-    except (HTTPException, requests.exceptions.HTTPError) as e:
-        d = {ERROR_KEY: str(e)}
-    except ImportError as e:
-        d = {ERROR_KEY: str(e)}
-    return d
+#def get_celery_worker_status():
+    #ERROR_KEY = "ERROR"
+    #try:
+        #insp = inspect()
+        #print "inspect is :-\n"
+        #pprint(insp)
+        #d = insp.stats()
+        #if not d:
+            #d = {ERROR_KEY: 'No running Celery workers were found.'}
+    #except IOError as e:
+        #from errno import errorcode
+        #msg = "Error connecting to the backend: " + str(e)
+        #if len(e.args) > 0 and errorcode.get(e.args[0]) == 'ECONNREFUSED':
+            #msg += ' Check that the RabbitMQ server is running.'
+        #d = {ERROR_KEY: msg}
+    #except (HTTPException, requests.exceptions.HTTPError) as e:
+        #d = {ERROR_KEY: str(e)}
+    #except ImportError as e:
+        #d = {ERROR_KEY: str(e)}
+    #return d
 
 
 def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
@@ -233,18 +233,24 @@ def get_redis_queue_count(active_queues):
       password=redis_queue_url.password
     )
 
+    print "Getting redis queue count"
+    print "host = %s " % redis_queue_url.hostname
+    print "port = %s " % redis_queue_url.port
+    print "db = %s " % redis_queue_url.db
+    print "password = %s " % redis_queue_url.password
+    pprint(queue)
     if not active_queues:
-        #print "[WARN] no active queues data given"
+        print "[WARN] no active queues data given"
         active_queues = {}
 
     data = {}
 
     for queuename, procname in PROC_MAP.iteritems():
         length = int(queue.llen(queuename))
-        #print "count %s = %s" % (queuename, length)
-        #print "queuename = %s" % queuename
-        #print "procname = %s" % procname
-        #print "active %s = %s" % (queuename, active_queues[procname])
+        print "count %s = %s" % (queuename, length)
+        print "queuename = %s" % queuename
+        print "procname = %s" % procname
+        print "active %s = %s" % (queuename, active_queues[procname])
         if not procname in data:
             data[procname] = {'count': length, 'active': 0}
         else:
@@ -299,8 +305,6 @@ def get_ironmq_queue_count(active_queues):
 
 def get_active_queues():
     i = inspect()
-    d = i.stats()
-    pprint(d)
     active = {}
     data = {}
     try:
