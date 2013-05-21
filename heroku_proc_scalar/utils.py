@@ -250,7 +250,6 @@ def get_redis_queue_count(active_queues):
         print "count %s = %s" % (queuename, length)
         print "queuename = %s" % queuename
         print "procname = %s" % procname
-        print "active %s = %s" % (queuename, active_queues[procname])
         if not procname in data:
             data[procname] = {'count': length, 'active': 0}
         else:
