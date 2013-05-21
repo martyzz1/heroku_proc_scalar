@@ -306,8 +306,9 @@ def get_ironmq_queue_count(active_queues):
 def get_active_queues():
     print "ABOUT TO GET INSPECT"
     #i = inspect()
-    i = celery.control.inspect()
+    i = celery.control.inspect([x for x in QUEUE_MAP.iterkeys()])
     time.sleep(2)
+    pprint(i)
     print "GOT INSPECT"
     time.sleep(2)
     active = {}
