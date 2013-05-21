@@ -306,15 +306,15 @@ def get_ironmq_queue_count(active_queues):
 def get_active_queues():
     print "ABOUT TO GET INSPECT"
     i = inspect()
-    sleep 4
+    time.sleep(2)
     print "GOT INSPECT"
-    sleep 2
+    time.sleep(2)
     active = {}
     data = {}
     try:
         print "About to get Active"
         active = i.active()
-        sleep 2
+        time.sleep(2)
         print "Got Active"
     except (HTTPException, requests.exceptions.HTTPError) as e:
         print "Exception HTTPError %s " % e
