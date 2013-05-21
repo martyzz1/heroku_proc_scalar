@@ -5,7 +5,7 @@ from httplib import HTTPException
 import redis
 from celery.task.control import inspect
 from celery import current_app as celery
-from pprint import pprint
+from pprint import pprint as pprint
 # Ensure built-in tasks are loaded for task_list view
 import os
 import time
@@ -236,7 +236,7 @@ def get_redis_queue_count(active_queues):
     print "Getting redis queue count"
     print "host = %s " % redis_queue_url.hostname
     print "port = %s " % redis_queue_url.port
-    print "db = %s " % redis_queue_url.db
+    print "db = %s " % redis_queue_url.path[1:]
     print "password = %s " % redis_queue_url.password
     pprint(queue)
     if not active_queues:
