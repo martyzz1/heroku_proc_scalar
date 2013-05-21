@@ -305,7 +305,8 @@ def get_ironmq_queue_count(active_queues):
 
 def get_active_queues():
     print "ABOUT TO GET INSPECT"
-    i = inspect()
+    #i = inspect()
+    i = celery.control.inspect()
     time.sleep(2)
     print "GOT INSPECT"
     time.sleep(2)
@@ -316,6 +317,7 @@ def get_active_queues():
         active = i.active()
         time.sleep(2)
         print "Got Active"
+        pprint(active)
     except (HTTPException, requests.exceptions.HTTPError) as e:
         print "Exception HTTPError %s " % e
         pass
