@@ -240,7 +240,7 @@ def get_redis_queue_count(active_queues):
     #print "password = %s " % redis_queue_url.password
     #pprint(queue)
     if not active_queues:
-        print "[WARN] no active queues data given"
+        #print "[WARN] no active queues data given"
         active_queues = {}
 
     data = {}
@@ -272,13 +272,12 @@ def get_ironmq_queue_count(active_queues):
 
     queue = IronMQ(host=IRON_MQ_HOST, project_id=IRON_MQ_PROJECT_ID, token=IRON_MQ_TOKEN)
     if not active_queues:
-        print "[WARN] no active_queues data given"
+        #print "[WARN] no active_queues data given"
         active_queues = {}
 
     data = {}
 
     for queuename, procname in PROC_MAP.iteritems():
-        from pprint import pprint
         details = {}
         try:
             details = queue.getQueueDetails(queuename)
@@ -317,7 +316,7 @@ def get_active_queues():
         active = i.active()
         #time.sleep(2)
         #print "Got Active"
-        pprint(active)
+        #pprint(active)
     except (HTTPException, requests.exceptions.HTTPError) as e:
         print "Exception HTTPError %s " % e
         pass
