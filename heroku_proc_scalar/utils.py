@@ -233,12 +233,12 @@ def get_redis_queue_count(active_queues):
       password=redis_queue_url.password
     )
 
-    print "Getting redis queue count"
-    print "host = %s " % redis_queue_url.hostname
-    print "port = %s " % redis_queue_url.port
-    print "db = %s " % redis_queue_url.path[1:]
-    print "password = %s " % redis_queue_url.password
-    pprint(queue)
+    #print "Getting redis queue count"
+    #print "host = %s " % redis_queue_url.hostname
+    #print "port = %s " % redis_queue_url.port
+    #print "db = %s " % redis_queue_url.path[1:]
+    #print "password = %s " % redis_queue_url.password
+    #pprint(queue)
     if not active_queues:
         print "[WARN] no active queues data given"
         active_queues = {}
@@ -247,9 +247,9 @@ def get_redis_queue_count(active_queues):
 
     for queuename, procname in PROC_MAP.iteritems():
         length = int(queue.llen(queuename))
-        print "count %s = %s" % (queuename, length)
-        print "queuename = %s" % queuename
-        print "procname = %s" % procname
+        #print "count %s = %s" % (queuename, length)
+        #print "queuename = %s" % queuename
+        #print "procname = %s" % procname
         if not procname in data:
             data[procname] = {'count': length, 'active': 0}
         else:
@@ -287,9 +287,9 @@ def get_ironmq_queue_count(active_queues):
         except (HTTPException, requests.exceptions.HTTPError) as e:
             length = 0
 
-        print "count %s = %s" % (queuename, length)
-        print "queuename = %s" % queuename
-        print "procname = %s" % procname
+        #print "count %s = %s" % (queuename, length)
+        #print "queuename = %s" % queuename
+        #print "procname = %s" % procname
 
         if not procname in data:
             data[procname] = {'count': length, 'active': 0}
@@ -303,20 +303,20 @@ def get_ironmq_queue_count(active_queues):
 
 
 def get_active_queues():
-    print "ABOUT TO GET INSPECT"
+    #print "ABOUT TO GET INSPECT"
     #i = inspect()
     i = celery.control.inspect([x for x in QUEUE_MAP.iterkeys()])
-    time.sleep(2)
-    pprint(i)
-    print "GOT INSPECT"
-    time.sleep(2)
+    #time.sleep(2)
+    #pprint(i)
+    #print "GOT INSPECT"
+    #time.sleep(2)
     active = {}
     data = {}
     try:
-        print "About to get Active"
+        #print "About to get Active"
         active = i.active()
-        time.sleep(2)
-        print "Got Active"
+        #time.sleep(2)
+        #print "Got Active"
         pprint(active)
     except (HTTPException, requests.exceptions.HTTPError) as e:
         print "Exception HTTPError %s " % e
@@ -324,7 +324,7 @@ def get_active_queues():
     if active:
         for queuename in active.iterkeys():
             length = len(active[queuename])
-            print "%s => %s" % (queuename, length)
+            #print "%s => %s" % (queuename, length)
             if queuename in data:
                 data[queuename] += length
             else:
