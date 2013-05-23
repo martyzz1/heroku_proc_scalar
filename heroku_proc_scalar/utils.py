@@ -25,16 +25,20 @@ HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
 HEROKU_SCALAR_SHUTDOWN_RETRY = int(os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10))
 proc_scalar_lock_db = urlparse(settings.PROC_SCALAR_LOCK_DB)
 
-if not HEROKU_API_KEY:
-    print "HEROKU_API_KEY not set"
 
-if not HEROKU_APPNAME:
-    print "HEROKU_APPNAME not set"
+def get_heroku_conn():
+
+    assert HEROKU_API_KEY
+    assert HEROKU_APPNAME
+
+    heroku_conn = heroku.from_key(HEROKU_API_KEY)
+    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+
+    return heroku_conn, heroku_app
 
 
 def scale_me_down():
-    heroku_conn = heroku.from_key(HEROKU_API_KEY)
-    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+    heroku_conn, heroku_app = get_heroku_conn()
     #pprint(heroku_app.processes)
     try:
         print "\n\n=============Scaling down normally!\n\n"
@@ -53,8 +57,7 @@ def scale_me_down():
 
 def get_running_celery_workers():
 
-    heroku_conn = heroku.from_key(HEROKU_API_KEY)
-    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+    heroku_conn, heroku_app = get_heroku_conn()
 
     procs = heroku_app.processes
     workers = []
@@ -93,8 +96,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 #N.B. worker_hostname is set by -n variable in Procfile and MUST MUST MUST
 #be identical to the process name. Break this and all is lost()
 #We therefore can use procname and worker_hostname interchangeably
-    heroku_conn = heroku.from_key(HEROKU_API_KEY)
-    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+    heroku_conn, heroku_app = get_heroku_conn()
 
     lock = redis.StrictRedis(
         host=proc_scalar_lock_db.hostname,
@@ -204,8 +206,7 @@ def disable_dyno(heroku_conn, heroku_app, procname):
 
 
 def start_dynos(proclist):
-    heroku_conn = heroku.from_key(HEROKU_API_KEY)
-    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
+    heroku_conn, heroku_app = get_heroku_conn()
 
     for proc in proclist:
         start_dyno(heroku_conn, heroku_app, proc)
