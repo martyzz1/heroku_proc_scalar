@@ -3,14 +3,14 @@ from urlparse import urlparse, uses_netloc
 from . import PROC_MAP, CONTROL_APP, QUEUE_MAP
 from httplib import HTTPException
 import redis
-from celery.task.control import inspect
+#from celery.task.control import inspect
 from celery import current_app as celery
 from pprint import pprint as pprint
 # Ensure built-in tasks are loaded for task_list view
 import os
 import time
 import heroku
-import iron_celery
+#import iron_celery
 import requests
 from iron_mq import IronMQ
 #import logging
@@ -70,28 +70,6 @@ def get_running_celery_workers():
     return workers
 
 
-#def get_celery_worker_status():
-    #ERROR_KEY = "ERROR"
-    #try:
-        #insp = inspect()
-        #print "inspect is :-\n"
-        #pprint(insp)
-        #d = insp.stats()
-        #if not d:
-            #d = {ERROR_KEY: 'No running Celery workers were found.'}
-    #except IOError as e:
-        #from errno import errorcode
-        #msg = "Error connecting to the backend: " + str(e)
-        #if len(e.args) > 0 and errorcode.get(e.args[0]) == 'ECONNREFUSED':
-            #msg += ' Check that the RabbitMQ server is running.'
-        #d = {ERROR_KEY: msg}
-    #except (HTTPException, requests.exceptions.HTTPError) as e:
-        #d = {ERROR_KEY: str(e)}
-    #except ImportError as e:
-        #d = {ERROR_KEY: str(e)}
-    #return d
-
-
 def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
 #N.B. worker_hostname is set by -n variable in Procfile and MUST MUST MUST
 #be identical to the process name. Break this and all is lost()
@@ -113,7 +91,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
         hostnames = []
         try:
             hostnames = c.ping()
-        except (HTTPException, requests.exceptions.HTTPError) as e:
+        except (HTTPException, requests.exceptions.HTTPError):
             pass
         for h in hostnames:
             for host, y in h.iteritems():
@@ -185,8 +163,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     #Now scale down...
     for hostname in worker_hostnames_to_process:
         disable_dyno(heroku_conn, heroku_app, hostname)
-        key = 'DISABLE_CELERY_%s' % hostname
-        lock.set('DISABLE_CELERY_%s' % hostname, 0)
+        #key = 'DISABLE_CELERY_%s' % hostname
+        #lock.set('DISABLE_CELERY_%s' % hostname, 0)
 
     return worker_hostnames_to_process
 
@@ -208,12 +186,21 @@ def disable_dyno(heroku_conn, heroku_app, procname):
 def start_dynos(proclist):
     heroku_conn, heroku_app = get_heroku_conn()
 
+    lock = redis.StrictRedis(
+        host=proc_scalar_lock_db.hostname,
+        port=int(proc_scalar_lock_db.port),
+        db=int(proc_scalar_lock_db.path[1:]),
+        password=proc_scalar_lock_db.password
+    )
+
     for proc in proclist:
-        start_dyno(heroku_conn, heroku_app, proc)
+        start_dyno(heroku_conn, heroku_app, proc, lock)
 
 
-def start_dyno(heroku_conn, heroku_app, procname):
+def start_dyno(heroku_conn, heroku_app, procname, lock):
 
+    print "unlocking dyno %s" % procname
+    lock.set('DISABLE_CELERY_%s' % procname, 0)
     print "starting dyno %s" % procname
     try:
         heroku_app.processes[procname].scale(1)
@@ -284,7 +271,7 @@ def get_ironmq_queue_count(active_queues):
             details = queue.getQueueDetails(queuename)
             pprint(details)
             length = details["size"]
-        except (HTTPException, requests.exceptions.HTTPError) as e:
+        except (HTTPException, requests.exceptions.HTTPError):
             length = 0
 
         #print "count %s = %s" % (queuename, length)
