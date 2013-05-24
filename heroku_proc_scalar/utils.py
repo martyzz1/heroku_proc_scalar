@@ -185,7 +185,7 @@ def disable_dyno(heroku_conn, heroku_app, procname):
         pass
 
 
-def start_dynos(proclist):
+def start_dynos(proclist, for_deployment='idle'):
     heroku_conn, heroku_app = get_heroku_conn()
 
     lock = redis.StrictRedis(
@@ -196,13 +196,17 @@ def start_dynos(proclist):
     )
 
     for proc in proclist:
-        start_dyno(heroku_conn, heroku_app, proc, lock)
+        start_dyno(heroku_conn, heroku_app, proc, lock, for_deployment)
 
 
-def start_dyno(heroku_conn, heroku_app, procname, lock):
+def start_dyno(heroku_conn, heroku_app, procname, lock, for_deployment):
 
-    print "unlocking dyno %s" % procname
-    lock.set('DISABLE_CELERY_%s' % procname, 0)
+    key = 'DISABLE_CELERY_%s' % procname
+    is_disabled = lock.get(key)
+    if for_deployment == 'deployment' or is_disabled == for_deployment:
+        print "unlocking dyno %s from %s" % (procname, for_deployment)
+        lock.set('DISABLE_CELERY_%s' % procname, 0)
+
     print "starting dyno %s" % procname
     try:
         heroku_app.processes[procname].scale(1)

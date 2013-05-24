@@ -21,6 +21,12 @@ def restart_processes(*worker_hostnames):
 
 
 @task
+def restart_processes_after_deployment(*worker_hostnames):
+
+    return start_dynos(worker_hostnames, 'deployment')
+
+
+@task
 def print_running_processes():
 
     proclist = get_running_celery_workers()
