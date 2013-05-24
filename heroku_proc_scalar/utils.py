@@ -70,7 +70,7 @@ def get_running_celery_workers():
     return workers
 
 
-def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
+def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
 #N.B. worker_hostname is set by -n variable in Procfile and MUST MUST MUST
 #be identical to the process name. Break this and all is lost()
 #We therefore can use procname and worker_hostname interchangeably
@@ -163,8 +163,10 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='restart'):
     #Now scale down...
     for hostname in worker_hostnames_to_process:
         disable_dyno(heroku_conn, heroku_app, hostname)
-        #key = 'DISABLE_CELERY_%s' % hostname
-        #lock.set('DISABLE_CELERY_%s' % hostname, 0)
+        #only remove the lock if we're not shutting down for deployment
+        #otherwise the proc scalar wouldn't be able to restart this.
+        if for_deployment == 'idle':
+            lock.set('DISABLE_CELERY_%s' % hostname, 0)
 
     return worker_hostnames_to_process
 
