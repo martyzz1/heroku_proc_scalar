@@ -99,7 +99,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
             for host, y in h.iteritems():
                 worker_hostnames.append(host)
 
-    #pprint(worker_hostnames)
+    pprint(worker_hostnames)
 
     worker_hostnames = list(set(worker_hostnames))
     worker_hostnames_to_process = []
