@@ -76,7 +76,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
 #We therefore can use procname and worker_hostname interchangeably
     heroku_conn, heroku_app = get_heroku_conn()
 
-    print "Shutting down Celery for %" % for_deployment
+    print "Shutting down Celery for %s" % for_deployment
 
     lock = redis.StrictRedis(
         host=proc_scalar_lock_db.hostname,
