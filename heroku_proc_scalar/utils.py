@@ -99,7 +99,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
             for host, y in h.iteritems():
                 worker_hostnames.append(host)
 
-    pprint(worker_hostnames)
+    #pprint(worker_hostnames)
 
     worker_hostnames = list(set(worker_hostnames))
     worker_hostnames_to_process = []
@@ -123,6 +123,10 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
     if len(worker_hostnames_to_process) > 0:
         celery.control.broadcast('shutdown', destination=worker_hostnames_to_process)
     else:
+        if for_deployment == 'deployment':
+            for procname in QUEUE_MAP.iterkeys():
+                key = "DISABLE_CELERY_%s" % procname
+                lock.set(key, 'deployment')
         return []
 
     wait_confirm_shutdown = True
