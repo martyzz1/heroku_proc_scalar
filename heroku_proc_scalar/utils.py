@@ -113,7 +113,11 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         else:
             worker_hostnames_to_process.append(hostname)
 
-        lock.set(key, for_deployment)
+        if not is_already_disabled:
+            lock.set(key, for_deployment)
+        elif is_already_disabled == 'deployment':
+            lock.set(key, 'deployment')
+
         print "Shutting down %s" % hostname
         #celery.control.broadcast('shutdown', destination=[hostname])
 
