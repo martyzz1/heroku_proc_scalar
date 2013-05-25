@@ -24,4 +24,4 @@ if DISABLE_CELERY and DISABLE_CELERY != '0':
     print "Celery disabled for %s exiting..." % DISABLE_CELERY
     sys.exit(0)
 else:
-    print "Celery enabled running..."
+    print "Celery enabled(%s) running..." % DISABLE_CELERY

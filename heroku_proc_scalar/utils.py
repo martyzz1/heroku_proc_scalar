@@ -76,6 +76,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
 #We therefore can use procname and worker_hostname interchangeably
     heroku_conn, heroku_app = get_heroku_conn()
 
+    print "Shutting down Celery for %" % for_deployment
+
     lock = redis.StrictRedis(
         host=proc_scalar_lock_db.hostname,
         port=int(proc_scalar_lock_db.port),
@@ -105,21 +107,18 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
     for hostname in worker_hostnames:
         key = "DISABLE_CELERY_%s" % hostname
         is_already_disabled = lock.get(key)
-        if not for_deployment == is_already_disabled:
+        if for_deployment == 'deployment':
             if is_already_disabled == 'deployment':
                 print "Celery process %s already marked as shutdown for deployment - nothing to do" % hostname
             else:
                 worker_hostnames_to_process.append(hostname)
+            lock.set(key, 'deployment')
         else:
             worker_hostnames_to_process.append(hostname)
-
-        if not is_already_disabled:
-            lock.set(key, for_deployment)
-        elif is_already_disabled == 'deployment':
-            lock.set(key, 'deployment')
-
-        print "Shutting down %s" % hostname
-        #celery.control.broadcast('shutdown', destination=[hostname])
+            if is_already_disabled == 'deployment':
+                print "Celery process %s already marked as shutdown for deployment - nothing to do" % hostname
+            else:
+                lock.set(key, for_deployment)
 
     if len(worker_hostnames_to_process) > 0:
         celery.control.broadcast('shutdown', destination=worker_hostnames_to_process)
@@ -169,8 +168,14 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         disable_dyno(heroku_conn, heroku_app, hostname)
         #only remove the lock if we're not shutting down for deployment
         #otherwise the proc scalar wouldn't be able to restart this.
-        if for_deployment == 'idle':
-            lock.set('DISABLE_CELERY_%s' % hostname, 0)
+        key = "DISABLE_CELERY_%s" % hostname
+        is_already_disabled = lock.get(key)
+        print "Checking if I should remove lock for %s" % key
+        if not for_deployment == 'deployment':
+            print "Looks like we're not shutting down for deployment"
+            if not is_already_disabled == 'deployment':
+                print "Unlocking deployment %s for %s" % (key, is_already_disabled)
+                lock.set('DISABLE_CELERY_%s' % hostname, 0)
 
     return worker_hostnames_to_process
 
