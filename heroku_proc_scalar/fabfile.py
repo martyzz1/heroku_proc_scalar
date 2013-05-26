@@ -1,5 +1,5 @@
 from fabric.api import task
-from .utils import shutdown_celery_processes, start_dynos, get_running_celery_workers
+from .utils import shutdown_celery_processes, start_dynos, get_running_celery_workers, lock_celery_for_deployment, unlock_celery_after_deployment
 
 
 @task
