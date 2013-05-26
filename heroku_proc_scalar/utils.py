@@ -184,7 +184,7 @@ def disable_dyno(heroku_conn, heroku_app, procname):
         pass
 
 
-def lock_celery_for_deployment():
+def lock_celery():
 
     lock = redis.StrictRedis(
         host=proc_scalar_lock_db.hostname,
@@ -198,7 +198,7 @@ def lock_celery_for_deployment():
         lock.set(key, 'deployment')
 
 
-def unlock_celery_after_deployment():
+def unlock_celery():
 
     lock = redis.StrictRedis(
         host=proc_scalar_lock_db.hostname,
