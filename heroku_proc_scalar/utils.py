@@ -243,6 +243,13 @@ def get_redis_queue_count(active_queues):
       password=redis_queue_url.password
     )
 
+    lock = redis.StrictRedis(
+        host=proc_scalar_lock_db.hostname,
+        port=int(proc_scalar_lock_db.port),
+        db=int(proc_scalar_lock_db.path[1:]),
+        password=proc_scalar_lock_db.password
+    )
+
     #print "Getting redis queue count"
     #print "host = %s " % redis_queue_url.hostname
     #print "port = %s " % redis_queue_url.port
@@ -261,7 +268,11 @@ def get_redis_queue_count(active_queues):
         #print "queuename = %s" % queuename
         #print "procname = %s" % procname
         if not procname in data:
-            data[procname] = {'count': length, 'active': 0}
+            key = "DISABLE_CELERY_%s" % procname
+            if lock.get(key) and lock.get(key) == 'deployment':
+                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 1}
+            else:
+                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 0}
         else:
             data[procname]['count'] += length
 
@@ -279,6 +290,12 @@ def get_ironmq_queue_count(active_queues):
     assert(IRON_MQ_PROJECT_ID)
     assert(IRON_MQ_TOKEN)
     assert(IRON_MQ_HOST)
+    lock = redis.StrictRedis(
+        host=proc_scalar_lock_db.hostname,
+        port=int(proc_scalar_lock_db.port),
+        db=int(proc_scalar_lock_db.path[1:]),
+        password=proc_scalar_lock_db.password
+    )
 
     queue = IronMQ(host=IRON_MQ_HOST, project_id=IRON_MQ_PROJECT_ID, token=IRON_MQ_TOKEN)
     if not active_queues:
@@ -301,7 +318,11 @@ def get_ironmq_queue_count(active_queues):
         #print "procname = %s" % procname
 
         if not procname in data:
-            data[procname] = {'count': length, 'active': 0}
+            key = "DISABLE_CELERY_%s" % procname
+            if lock.get(key) and lock.get(key) == 'deployment':
+                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 1}
+            else:
+                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 0}
         else:
             data[procname]['count'] += length
 
