@@ -269,10 +269,10 @@ def get_redis_queue_count(active_queues):
         #print "procname = %s" % procname
         if not procname in data:
             key = "DISABLE_CELERY_%s" % procname
-            if lock.get(key) and lock.get(key) == 'deployment':
-                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 1}
-            else:
-                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 0}
+            lock_type = lock.get(key)
+            if not lock_type == 0:
+                lock_type = 0
+            data[procname] = {'count': length, 'active': 0, 'deploy_lock': lock_type}
         else:
             data[procname]['count'] += length
 
@@ -319,10 +319,10 @@ def get_ironmq_queue_count(active_queues):
 
         if not procname in data:
             key = "DISABLE_CELERY_%s" % procname
-            if lock.get(key) and lock.get(key) == 'deployment':
-                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 1}
-            else:
-                data[procname] = {'count': length, 'active': 0, 'deploy_lock': 0}
+            lock_type = lock.get(key)
+            if not lock_type == 0:
+                lock_type = 0
+            data[procname] = {'count': length, 'active': 0, 'deploy_lock': lock_type}
         else:
             data[procname]['count'] += length
 
