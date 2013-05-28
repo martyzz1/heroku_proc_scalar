@@ -108,6 +108,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         key = "DISABLE_CELERY_%s" % hostname
         is_already_disabled = lock.get(key)
         if not is_already_disabled == 'deployment':
+            print "locking %s for %s" % (hostname, for_deployment)
             lock.set(key, for_deployment)
 
         worker_hostnames_to_process.append(hostname)
@@ -164,7 +165,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         is_already_disabled = lock.get(key)
         if not for_deployment == 'deployment':
             if not is_already_disabled == 'deployment':
-                print "Unlocking deployment %s for %s" % (key, is_already_disabled)
+                print "Unlocking %s from %s" % (hostname, is_already_disabled)
                 lock.set(key, 0)
 
     return worker_hostnames_to_process
