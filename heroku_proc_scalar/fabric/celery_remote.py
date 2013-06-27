@@ -1,5 +1,5 @@
 from fabric.api import task
-from .utils import shutdown_celery_processes, start_dynos, get_running_celery_workers, lock_celery, unlock_celery
+from heroku_proc_scalar.utils import shutdown_celery_processes, start_dynos, get_running_celery_workers, lock_celery, unlock_celery
 
 
 @task
