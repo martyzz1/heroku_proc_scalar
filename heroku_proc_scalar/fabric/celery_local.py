@@ -2,20 +2,20 @@ from fabric.api import task, local, env
 
 
 @task
-def lock_remote_celery_for_deployment():
-    cmd = "heroku run fab celery.lock_celery_for_deployment --app %s" % env.app_name
+def lock_remote_for_deployment():
+    cmd = "heroku run fab celery.lock_for_deployment --app %s" % env.app_name
     local(cmd)
 
 
 @task
-def unlock_remote_celery_after_deployment():
-    cmd = "heroku run fab celery.unlock_celery_after_deployment --app %s" % env.app_name
+def unlock_remote_after_deployment():
+    cmd = "heroku run fab celery.unlock_after_deployment --app %s" % env.app_name
     local(cmd)
 
 
 @task
-def shutdown_remote_celery():
-    cmd = "heroku run fab celery.shutdown_celery_process_for_deployment --app %s" % env.app_name
+def shutdown_remote():
+    cmd = "heroku run fab celery.shutdown_process_for_deployment --app %s" % env.app_name
     local(cmd)
 
 

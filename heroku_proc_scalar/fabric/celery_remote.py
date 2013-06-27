@@ -3,23 +3,23 @@ from heroku_proc_scalar.utils import shutdown_celery_processes, start_dynos, get
 
 
 @task
-def unlock_celery_after_deployment():
+def unlock_after_deployment():
     return unlock_celery()
 
 
 @task
-def lock_celery_for_deployment():
+def lock_for_deployment():
     return lock_celery()
 
 
 @task
-def shutdown_celery_process(*worker_hostnames):
+def shutdown_process(*worker_hostnames):
 
     return shutdown_celery_processes(worker_hostnames)
 
 
 @task
-def shutdown_celery_process_for_deployment():
+def shutdown_process_for_deployment():
 
     return shutdown_celery_processes([], 'deployment')
 
