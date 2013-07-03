@@ -11,5 +11,5 @@ setup(
         packages=find_packages(),
         keywords='celery, djcelery, heroku, autoscaling, redis, iron_mq',
         zip_safe=True,
-        install_requires=['Fabric==1.4.3', 'heroku==0.1.2', 'Django==1.4.5']
+        install_requires=['Fabric==1.4.3', 'heroku==0.1.2', 'Django==1.4.5', 'iron-mq==0.4']
         )
