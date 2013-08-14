@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 try:
     from iron_mq import IronMQ
 except ImportError:
-    IronMQ = None
+    IronMQ = None # noqa
     logger.warning("Couldn't import iron_mq, no support for it")
 
 
