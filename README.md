@@ -28,7 +28,7 @@ add the following to your django settings
 
 Export the following environment variable:
 
-    PROC_SCALAR_LOCK_DB = 'redis://redis.dev.local:6379/0'
+    PROC_SCALAR_LOCK_DB='redis://redis.dev.local:6379/0'
 
 If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
 
@@ -80,4 +80,5 @@ i.e.
     celery_default: CELERY_HOSTNAME=celery_default python manage.py celeryd -E --loglevel=DEBUG -n celery_default --queues default -I heroku_proc_scalar.redis_celerycheck
 
 
-N.B. Using this code to control celery process on a local dev branch is NOT supported, as the whole point of this is to use heroku's api to control heroku instances.  The PROCFILE env var is simply a conveniance to aid in some elements of debug, testing and development.
+N.B. Using this code to control celery process on a local dev branch is NOT supported, as the whole point of this is to use heroku's api to control heroku instances.
+The PROCFILE env var is simply a conveniance to aid in some elements of debug, testing and development.

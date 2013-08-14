@@ -6,7 +6,7 @@ class NoQueuesFound(Exception):
     pass
 
 
-def get_queue_maps():
+def get_queue_maps_from_procfile():
     queuemaps = {}
     e = re.compile("(\w+):.+(--queues|-Q)\s+(\w[\w,\s]*)")
     c = re.compile("(\w+):.+bin\/celery_shutdown.py")
@@ -44,5 +44,5 @@ def get_proc_maps(queue_map):
 
     return proc_map
 
-QUEUE_MAP, CONTROL_APP = get_queue_maps()
+QUEUE_MAP, CONTROL_APP = get_queue_maps_from_procfile()
 PROC_MAP = get_proc_maps(QUEUE_MAP)

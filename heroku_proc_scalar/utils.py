@@ -21,46 +21,53 @@ def get_heroku_conn():
     assert settings.HEROKU_API_KEY
     assert settings.HEROKU_APPNAME
     heroku_conn = heroku.from_key(settings.HEROKU_API_KEY)
-    heroku_app = heroku_conn.apps[settings.HEROKU_APPNAME]
-    return heroku_conn, heroku_app
+    return heroku_conn, heroku_conn.apps[settings.HEROKU_APPNAME]
 
 
 def scale_me_down():
     heroku_conn, heroku_app = get_heroku_conn()
+    logger.info("scaling down..")
     try:
-        print "\n\n=============Scaling down normally!\n\n"
         heroku_app.processes[CONTROL_APP].scale(0)
-        print "\n\n=============Ran normally\n\n"
+        logger.info("scaled down ok")
     except KeyError as e:
-        # this means the prc isn't running - bug in heroku api methinks
+        # this means the proc isn't running - bug in heroku api methinks
         # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
-        print e.message
-
-    print "\n\n=============Finished scaling down\n\n"
+        logger.error("problem scaling down, process not running: " + e.message)
 
 
 def get_running_celery_workers():
-
     heroku_conn, heroku_app = get_heroku_conn()
-
     procs = heroku_app.processes
     workers = []
     for proc in procs:
-        #'app_name', 'slug', 'command', 'upid', 'process', 'action', 'rendezvous_url', 'pretty_state', 'state'
+        # 'app_name', 'slug', 'command', 'upid', 'process', 'action', 'rendezvous_url', 'pretty_state', 'state'
         procname, trash = proc.process.split('.')
         if procname in QUEUE_MAP:
             workers.append(procname)
-
     return workers
 
 
+def _get_worker_hostnames(control):
+    try:
+        hostnames = control.ping()
+    except (HTTPException, requests.exceptions.HTTPError):
+        return []
+    else:
+        worker_hostnames = []
+        for h in hostnames:
+            for host, _ in h.iteritems():
+                worker_hostnames.append(host)
+        return worker_hostnames
+
+
 def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
-#N.B. worker_hostname is set by -n variable in Procfile and MUST MUST MUST
-#be identical to the process name. Break this and all is lost()
-#We therefore can use procname and worker_hostname interchangeably
+    # N.B. worker_hostname is set by -n variable in Procfile and MUST MUST MUST
+    # be identical to the process name. Break this and all is lost()
+    # We therefore can use procname and worker_hostname interchangeably
     heroku_conn, heroku_app = get_heroku_conn()
 
-    print "Shutting down Celery for %s" % for_deployment
+    logger.info("shutting down celery for " + for_deployment)
 
     lock = redis.StrictRedis(
         host=settings.proc_scalar_lock_url.hostname,
@@ -70,21 +77,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
     )
 
     c = Control()
-    #pprint(worker_hostnames)
     if not len(worker_hostnames) > 0:
-        worker_hostnames = []
-        #print "[WARNING] No worker procnames given. I will shutdown ALL celery worker processes"
-        hostnames = []
-        try:
-            hostnames = c.ping()
-        except (HTTPException, requests.exceptions.HTTPError):
-            pass
-        for h in hostnames:
-            for host, y in h.iteritems():
-                worker_hostnames.append(host)
-
-    #pprint(worker_hostnames)
-
+        worker_hostnames = _get_worker_hostnames(c)
     worker_hostnames = list(set(worker_hostnames))
     worker_hostnames_to_process = []
 
@@ -92,7 +86,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         key = "DISABLE_CELERY_%s" % hostname
         is_already_disabled = lock.get(key)
         if not is_already_disabled == 'deployment':
-            print "locking %s for %s" % (hostname, for_deployment)
+            logger.info("locking {} for {}".format(hostname, for_deployment))
             lock.set(key, for_deployment)
 
         worker_hostnames_to_process.append(hostname)
@@ -103,7 +97,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         return []
 
     wait_confirm_shutdown = True
-    print "\n\n=========================================================\nWaiting for all the following celery workers to end gracefully (reach a state of crashed),\n this may take some time if they were currently running tasks....\n"
+    logger.info("Waiting for all the following celery workers to end gracefully (reach a state of crashed),"
+        + " this may take some time if they were currently running tasks...")
     status_str_length = 0
     counter = 0
     while(wait_confirm_shutdown):
@@ -114,7 +109,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
             try:
                 processes = heroku_app.processes[hostname]
             except KeyError:
-                #print "looks like process %s has already gone" % hostname
+                # looks like process has already gone
                 pass
             else:
                 count = 0
@@ -126,49 +121,45 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
                     status_line += "%s=%d    " % (hostname, count)
             if counter % settings.HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
                 if still_up == 1:
-                    print "Shutdown of %s taking too long, re-issuing" % hostname
+                    logger.info("shutdown of {} taking too long, re-issuing".format(hostname))
                     celery.control.broadcast('shutdown', destination=[hostname])
 
         if still_up == 0:
-            print "\n============================================================\nAll processes are now marked as crashed\n"
+            logger.info("all processes are now marked as crashed")
             wait_confirm_shutdown = False
         else:
             if len(status_line) > status_str_length:
                 status_str_length = len(status_line) + 1 + len(str(counter))
-            print "\r%s %d".ljust(status_str_length) % (status_line, counter),
-            #play nice to heroku api
+            logger.info("\r%s %d".ljust(status_str_length) % (status_line, counter))
+            # play nice to heroku api
             time.sleep(1)
 
-    print "\n"
-    #Now scale down...
+    # Now scale down...
     for hostname in worker_hostnames_to_process:
         disable_dyno(heroku_conn, heroku_app, hostname)
-        #only remove the lock if we're not shutting down for deployment
-        #otherwise the proc scalar wouldn't be able to restart this.
+        # only remove the lock if we're not shutting down for deployment
+        # otherwise the proc scalar wouldn't be able to restart this.
         key = "DISABLE_CELERY_%s" % hostname
         is_already_disabled = lock.get(key)
         if not for_deployment == 'deployment':
             if not is_already_disabled == 'deployment':
-                print "Unlocking %s from %s" % (hostname, is_already_disabled)
+                logger.info("unlocking {} from {}".format(hostname, is_already_disabled))
                 lock.set(key, 0)
 
     return worker_hostnames_to_process
 
 
 def disable_dyno(heroku_conn, heroku_app, procname):
-    print "Disabling dyno %s" % procname
+    logger.info("Disabling dyno " + procname)
     try:
         heroku_app.processes[procname].scale(0)
     except KeyError:
-        #this means the prc isn't running - bug in heroku api methinks
-        # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
-        #heroku_conn._http_resource(method='POST', resource=('apps', appname, 'ps', 'scale'), data={'type': procname, 'qty': 0})
-        #print "[WARN] if you see lots of these its likely there is a problem, but this could be caused by 2 processes trying to scale down the dyno's at the same time, the first one wins, this current process lost, i.e. the dyno was already gone"
         pass
+        # this means the proc isn't running - bug in heroku api methinks
+        # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
 
 
 def lock_celery():
-
     lock = redis.StrictRedis(
         host=settings.proc_scalar_lock_url.hostname,
         port=int(settings.proc_scalar_lock_url.port),
@@ -178,12 +169,11 @@ def lock_celery():
 
     for procname in QUEUE_MAP.iterkeys():
         key = "DISABLE_CELERY_%s" % procname
-        print "locking %s for deployment" % procname
+        logger.info("locking {} for deployment".format(procname))
         lock.set(key, 'deployment')
 
 
 def unlock_celery():
-
     lock = redis.StrictRedis(
         host=settings.proc_scalar_lock_url.hostname,
         port=int(settings.proc_scalar_lock_url.port),
@@ -193,7 +183,7 @@ def unlock_celery():
 
     for procname in QUEUE_MAP.iterkeys():
         key = "DISABLE_CELERY_%s" % procname
-        print "Unlocking %s after deployment" % procname
+        logger.info("unlocking %s after deployment".format(procname))
         lock.set(key, 0)
 
 
@@ -205,16 +195,17 @@ def start_dynos(proclist, after_deployment='idle'):
 
 
 def start_dyno(heroku_conn, heroku_app, procname):
-
-    print "starting dyno %s" % procname
+    logger.info("starting dyno " + procname)
     try:
         heroku_app.processes[procname].scale(1)
     except KeyError:
-        #this means the prc isn't running - bug in heroku api methinks
+        # this means the prc isn't running - bug in heroku api methinks
         # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
-        heroku_conn._http_resource(method='POST', resource=('apps', settings.HEROKU_APPNAME, 'ps', 'scale'), data={'type': procname, 'qty': 1})
-        #print "[WARN] if you see lots of these its likely there is a problem, but this could be caused by 2 processes trying to scale down the dyno's at the same time, the first one wins, this current process lost, i.e. the dyno was already gone"
-        pass
+        heroku_conn._http_resource(
+            method='POST',
+            resource=('apps', settings.HEROKU_APPNAME, 'ps', 'scale'),
+            data={'type': procname, 'qty': 1}
+        )
 
 
 def get_redis_queue_count(active_queues):
@@ -232,23 +223,13 @@ def get_redis_queue_count(active_queues):
         password=settings.proc_scalar_lock_url.password
     )
 
-    #print "Getting redis queue count"
-    #print "host = %s " % redis_queue_url.hostname
-    #print "port = %s " % redis_queue_url.port
-    #print "db = %s " % redis_queue_url.path[1:]
-    #print "password = %s " % redis_queue_url.password
-    #pprint(queue)
     if not active_queues:
-        #print "[WARN] no active queues data given"
         active_queues = {}
 
     data = {}
 
     for queuename, procname in PROC_MAP.iteritems():
         length = int(queue.llen(queuename))
-        #print "count %s = %s" % (queuename, length)
-        #print "queuename = %s" % queuename
-        #print "procname = %s" % procname
         if not procname in data:
             key = "DISABLE_CELERY_%s" % procname
             lock_type = lock.get(key)
@@ -297,10 +278,6 @@ def get_ironmq_queue_count(active_queues):
         except (HTTPException, requests.exceptions.HTTPError):
             length = 0
 
-        #print "count %s = %s" % (queuename, length)
-        #print "queuename = %s" % queuename
-        #print "procname = %s" % procname
-
         if not procname in data:
             key = "DISABLE_CELERY_%s" % procname
             lock_type = lock.get(key)
@@ -317,24 +294,13 @@ def get_ironmq_queue_count(active_queues):
 
 
 def get_active_queues():
-    #print "ABOUT TO GET INSPECT"
-    #i = inspect()
     i = celery.control.inspect([x for x in QUEUE_MAP.iterkeys()])
-    #time.sleep(2)
-    #pprint(i)
-    #print "GOT INSPECT"
-    #time.sleep(2)
     active = {}
     data = {}
     try:
-        #print "About to get Active"
         active = i.active()
-        #time.sleep(2)
-        #print "Got Active"
-        #pprint(active)
     except (HTTPException, requests.exceptions.HTTPError) as e:
-        print "Exception HTTPError %s " % e
-        pass
+        logger.error("HTTPError:" + e)
     if active:
         for queuename in active.iterkeys():
             length = len(active[queuename])
@@ -342,5 +308,4 @@ def get_active_queues():
                 data[queuename] += length
             else:
                 data[queuename] = length
-
     return data
