@@ -182,7 +182,7 @@ def unlock_celery():
 
     for procname in QUEUE_MAP.iterkeys():
         key = "DISABLE_CELERY_%s" % procname
-        print("unlocking %s after deployment".format(procname))
+        print("unlocking {} after deployment".format(procname))
         lock.set(key, 0)
 
 
