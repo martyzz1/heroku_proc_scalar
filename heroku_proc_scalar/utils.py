@@ -3,19 +3,14 @@ from urlparse import urlparse, uses_netloc
 from . import PROC_MAP, CONTROL_APP, QUEUE_MAP
 from httplib import HTTPException
 import redis
-#from celery.task.control import inspect
 from celery import current_app as celery
 from pprint import pprint as pprint
 # Ensure built-in tasks are loaded for task_list view
 import os
 import time
 import heroku
-#import iron_celery
 import requests
 from iron_mq import IronMQ
-#import logging
-#logger = logging.getLogger(__name__)
-
 from celery.app.control import Control
 
 uses_netloc.append('redis')
@@ -23,7 +18,7 @@ uses_netloc.append('redis')
 HEROKU_API_KEY = os.environ.get('HEROKU_API_KEY', False)
 HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
 HEROKU_SCALAR_SHUTDOWN_RETRY = int(os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10))
-proc_scalar_lock_db = urlparse(settings.PROC_SCALAR_LOCK_DB)
+proc_scalar_lock_db = urlparse(os.environ.get('PROC_SCALAR_LOCK_DB'))
 
 
 def get_heroku_conn():
