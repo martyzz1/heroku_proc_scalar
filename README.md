@@ -1,14 +1,14 @@
 heroku-proc-scalar
 ==================
 
-Django code side proc scalar
+Django code side process scalar
 
 
 Synopsis
 ========
 This code basically provides 2 pieces of functionlity
 
-    1. Fab tasks to safely shutdown your Celery worker processes, bypassing Heroku's built in 10s SIGKILL 
+    1. Fab tasks to safely shutdown your Celery worker processes, bypassing Heroku's built in 10s SIGKILL
     2. a json response providing some investigation of your celery worker processes current status. This is used by the heroku_proc_scalar_app to determine what actions to take for your app.
 
 
@@ -25,10 +25,9 @@ N.B. feel free to pick a specific commit point rather than HEAD
 add the following to your django settings
 
     INSTALLED_APPS.append('heroku_proc_scalar')
-    PROC_SCALAR_LOCK_DB = '<a redis db url to use for communication of shutdown messages>'
-        e.g.
-    PROC_SCALAR_LOCK_DB = os.environ.get('REDIS_CONTENTDB_URL')
-        or
+
+Export the following environment variable:
+
     PROC_SCALAR_LOCK_DB = 'redis://redis.dev.local:6379/0'
 
 If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
@@ -42,7 +41,7 @@ You must also add the included fab commands to your main app's fabfile.py
 Environment settings
 ====================
 
-HEROKU_API_KEY  
+HEROKU_API_KEY
 --------------
 Set your Heroku API Key as a config Variable inside your app
 
@@ -78,7 +77,6 @@ e.g.
     <procname>: env CELERY_HOSTNAME=<procname> python manage.py celeryd -E --loglevel=DEBUG -n <procname> --queues default -I heroku_proc_scalar.redis_celerycheck
 
 i.e.
-    
     celery_default: CELERY_HOSTNAME=celery_default python manage.py celeryd -E --loglevel=DEBUG -n celery_default --queues default -I heroku_proc_scalar.redis_celerycheck
 
 
