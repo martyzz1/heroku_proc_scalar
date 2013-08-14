@@ -1,51 +1,40 @@
-from django.conf import settings
-from urlparse import urlparse, uses_netloc
 from . import PROC_MAP, CONTROL_APP, QUEUE_MAP
 from httplib import HTTPException
-import redis
+from celery.app.control import Control
 from celery import current_app as celery
-from pprint import pprint as pprint
-# Ensure built-in tasks are loaded for task_list view
-import os
 import time
 import heroku
+import redis
 import requests
-from iron_mq import IronMQ
-from celery.app.control import Control
+import logging
+import settings
+logger = logging.getLogger(__name__)
 
-uses_netloc.append('redis')
-
-HEROKU_API_KEY = os.environ.get('HEROKU_API_KEY', False)
-HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
-HEROKU_SCALAR_SHUTDOWN_RETRY = int(os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10))
-proc_scalar_lock_db = urlparse(os.environ.get('PROC_SCALAR_LOCK_DB'))
+try:
+    from iron_mq import IronMQ
+except ImportError:
+    IronMQ = None
+    logger.warning("Couldn't import iron_mq, no support for it")
 
 
 def get_heroku_conn():
-
-    assert HEROKU_API_KEY
-    assert HEROKU_APPNAME
-
-    heroku_conn = heroku.from_key(HEROKU_API_KEY)
-    heroku_app = heroku_conn.apps[HEROKU_APPNAME]
-
+    assert settings.HEROKU_API_KEY
+    assert settings.HEROKU_APPNAME
+    heroku_conn = heroku.from_key(settings.HEROKU_API_KEY)
+    heroku_app = heroku_conn.apps[settings.HEROKU_APPNAME]
     return heroku_conn, heroku_app
 
 
 def scale_me_down():
     heroku_conn, heroku_app = get_heroku_conn()
-    #pprint(heroku_app.processes)
     try:
         print "\n\n=============Scaling down normally!\n\n"
-        #heroku_app.processes[CONTROL_APP].scale(0)
         heroku_app.processes[CONTROL_APP].scale(0)
         print "\n\n=============Ran normally\n\n"
     except KeyError as e:
-        #this means the prc isn't running - bug in heroku api methinks
+        # this means the prc isn't running - bug in heroku api methinks
         # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
         print e.message
-        #print "\n\n=============Scaling down the hard way!\n\n"
-        #heroku_conn._http_resource(method='POST', resource=('apps', heroku_app, 'ps', 'scale'), data={'type': CONTROL_APP, 'qty': 0})
 
     print "\n\n=============Finished scaling down\n\n"
 
@@ -74,10 +63,10 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
     print "Shutting down Celery for %s" % for_deployment
 
     lock = redis.StrictRedis(
-        host=proc_scalar_lock_db.hostname,
-        port=int(proc_scalar_lock_db.port),
-        db=int(proc_scalar_lock_db.path[1:]),
-        password=proc_scalar_lock_db.password
+        host=settings.proc_scalar_lock_url.hostname,
+        port=int(settings.proc_scalar_lock_url.port),
+        db=int(settings.proc_scalar_lock_url.path[1:]),
+        password=settings.proc_scalar_lock_url.password
     )
 
     c = Control()
@@ -135,7 +124,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
                         count += 1
                 if count > 0:
                     status_line += "%s=%d    " % (hostname, count)
-            if counter % HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
+            if counter % settings.HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
                 if still_up == 1:
                     print "Shutdown of %s taking too long, re-issuing" % hostname
                     celery.control.broadcast('shutdown', destination=[hostname])
@@ -167,8 +156,6 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
 
 
 def disable_dyno(heroku_conn, heroku_app, procname):
-    #appname = HEROKU_APPNAME
-
     print "Disabling dyno %s" % procname
     try:
         heroku_app.processes[procname].scale(0)
@@ -183,10 +170,10 @@ def disable_dyno(heroku_conn, heroku_app, procname):
 def lock_celery():
 
     lock = redis.StrictRedis(
-        host=proc_scalar_lock_db.hostname,
-        port=int(proc_scalar_lock_db.port),
-        db=int(proc_scalar_lock_db.path[1:]),
-        password=proc_scalar_lock_db.password
+        host=settings.proc_scalar_lock_url.hostname,
+        port=int(settings.proc_scalar_lock_url.port),
+        db=int(settings.proc_scalar_lock_url.path[1:]),
+        password=settings.proc_scalar_lock_url.password
     )
 
     for procname in QUEUE_MAP.iterkeys():
@@ -198,10 +185,10 @@ def lock_celery():
 def unlock_celery():
 
     lock = redis.StrictRedis(
-        host=proc_scalar_lock_db.hostname,
-        port=int(proc_scalar_lock_db.port),
-        db=int(proc_scalar_lock_db.path[1:]),
-        password=proc_scalar_lock_db.password
+        host=settings.proc_scalar_lock_url.hostname,
+        port=int(settings.proc_scalar_lock_url.port),
+        db=int(settings.proc_scalar_lock_url.path[1:]),
+        password=settings.proc_scalar_lock_url.password
     )
 
     for procname in QUEUE_MAP.iterkeys():
@@ -225,25 +212,24 @@ def start_dyno(heroku_conn, heroku_app, procname):
     except KeyError:
         #this means the prc isn't running - bug in heroku api methinks
         # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
-        heroku_conn._http_resource(method='POST', resource=('apps', HEROKU_APPNAME, 'ps', 'scale'), data={'type': procname, 'qty': 1})
+        heroku_conn._http_resource(method='POST', resource=('apps', settings.HEROKU_APPNAME, 'ps', 'scale'), data={'type': procname, 'qty': 1})
         #print "[WARN] if you see lots of these its likely there is a problem, but this could be caused by 2 processes trying to scale down the dyno's at the same time, the first one wins, this current process lost, i.e. the dyno was already gone"
         pass
 
 
 def get_redis_queue_count(active_queues):
-    redis_queue_url = urlparse(settings.BROKER_URL)
     queue = redis.StrictRedis(
-      host=redis_queue_url.hostname,
-      port=int(redis_queue_url.port),
-      db=int(redis_queue_url.path[1:]),
-      password=redis_queue_url.password
+        host=settings.redis_queue_url.hostname,
+        port=int(settings.redis_queue_url.port),
+        db=int(settings.redis_queue_url.path[1:]),
+        password=settings.redis_queue_url.password
     )
 
     lock = redis.StrictRedis(
-        host=proc_scalar_lock_db.hostname,
-        port=int(proc_scalar_lock_db.port),
-        db=int(proc_scalar_lock_db.path[1:]),
-        password=proc_scalar_lock_db.password
+        host=settings.proc_scalar_lock_url.hostname,
+        port=int(settings.proc_scalar_lock_url.port),
+        db=int(settings.proc_scalar_lock_url.path[1:]),
+        password=settings.proc_scalar_lock_url.password
     )
 
     #print "Getting redis queue count"
@@ -279,23 +265,25 @@ def get_redis_queue_count(active_queues):
 
 
 def get_ironmq_queue_count(active_queues):
-    IRON_MQ_PROJECT_ID = settings.IRON_MQ_PROJECT_ID
-    IRON_MQ_TOKEN = settings.IRON_MQ_TOKEN
-    IRON_MQ_HOST = settings.IRON_MQ_HOST
+    if not IronMQ:
+        return logger.error("iron_mq not loaded, not getting queue count")
+    assert(settings.IRON_MQ_PROJECT_ID)
+    assert(settings.IRON_MQ_TOKEN)
+    assert(settings.IRON_MQ_HOST)
 
-    assert(IRON_MQ_PROJECT_ID)
-    assert(IRON_MQ_TOKEN)
-    assert(IRON_MQ_HOST)
     lock = redis.StrictRedis(
-        host=proc_scalar_lock_db.hostname,
-        port=int(proc_scalar_lock_db.port),
-        db=int(proc_scalar_lock_db.path[1:]),
-        password=proc_scalar_lock_db.password
+        host=settings.proc_scalar_lock_url.hostname,
+        port=int(settings.proc_scalar_lock_url.port),
+        db=int(settings.proc_scalar_lock_url.path[1:]),
+        password=settings.proc_scalar_lock_url.password
     )
 
-    queue = IronMQ(host=IRON_MQ_HOST, project_id=IRON_MQ_PROJECT_ID, token=IRON_MQ_TOKEN)
+    queue = IronMQ(
+        host=settings.IRON_MQ_HOST,
+        project_id=settings.IRON_MQ_PROJECT_ID,
+        token=settings.IRON_MQ_TOKEN
+    )
     if not active_queues:
-        #print "[WARN] no active_queues data given"
         active_queues = {}
 
     data = {}
@@ -304,7 +292,7 @@ def get_ironmq_queue_count(active_queues):
         details = {}
         try:
             details = queue.getQueueDetails(queuename)
-            pprint(details)
+            logger.info(repr(details))
             length = details["size"]
         except (HTTPException, requests.exceptions.HTTPError):
             length = 0
@@ -350,7 +338,6 @@ def get_active_queues():
     if active:
         for queuename in active.iterkeys():
             length = len(active[queuename])
-            #print "%s => %s" % (queuename, length)
             if queuename in data:
                 data[queuename] += length
             else:
