@@ -22,6 +22,8 @@ def get_queue_maps():
     control_app = ''
     for data in lines:
         #print data
+        if data.startswith('#'):
+            continue
         match = e.search(data)
         if match:
             proc = match.group(1)
