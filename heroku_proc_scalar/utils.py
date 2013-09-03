@@ -1,5 +1,5 @@
 from __future__ import print_function
-from . import PROC_MAP, CONTROL_APP, QUEUE_MAP
+from . import PROC_MAP, QUEUE_MAP
 from httplib import HTTPException
 from celery.app.control import Control
 from celery import current_app as celery
@@ -20,30 +20,19 @@ def get_heroku_conn():
     assert settings.HEROKU_API_KEY
     assert settings.HEROKU_APPNAME
     heroku_conn = heroku.from_key(settings.HEROKU_API_KEY)
-    return heroku_conn, heroku_conn.apps[settings.HEROKU_APPNAME]
-
-
-def scale_me_down():
-    heroku_conn, heroku_app = get_heroku_conn()
-    print("scaling down..")
-    try:
-        heroku_app.processes[CONTROL_APP].scale(0)
-        print("scaled down ok")
-    except KeyError as e:
-        # this means the proc isn't running - bug in heroku api methinks
-        # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
-        print("Error problem scaling down, process not running: " + e.message)
+    return heroku_conn, heroku_conn.apps(settings.HEROKU_APPNAME)
 
 
 def get_running_celery_workers():
     heroku_conn, heroku_app = get_heroku_conn()
-    procs = heroku_app.processes
+    procs = heroku_app.process_formation()
     workers = []
     for proc in procs:
         # 'app_name', 'slug', 'command', 'upid', 'process', 'action', 'rendezvous_url', 'pretty_state', 'state'
-        procname, trash = proc.process.split('.')
-        if procname in QUEUE_MAP:
-            workers.append(procname)
+        procname = proc.type
+        if proc.quantity > 0:
+            if procname in QUEUE_MAP:
+                workers.append(procname)
     return workers
 
 
@@ -104,24 +93,23 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         counter += 1
         still_up = 0
         status_line = ''
-        for hostname in worker_hostnames_to_process:
-            try:
-                processes = heroku_app.processes[hostname]
-            except KeyError:
-                # looks like process has already gone
-                pass
-            else:
+        dynos = heroku_app.dynos()
+        for proc_type in worker_hostnames_to_process:
+            if proc_type in dynos:
                 count = 0
-                for proc in processes:
+                for proc in dynos[proc_type]:
                     if not proc.state == 'crashed':
                         still_up = 1
                         count += 1
                 if count > 0:
-                    status_line += "%s=%d    " % (hostname, count)
+                    status_line += "%s=%d    " % (proc_type, count)
+            else:
+                # looks like process has already gone
+                pass
             if counter % settings.HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
                 if still_up == 1:
-                    print("shutdown of {} taking too long, re-issuing".format(hostname))
-                    celery.control.broadcast('shutdown', destination=[hostname])
+                    print("shutdown of {} taking too long, re-issuing".format(proc_type))
+                    celery.control.broadcast('shutdown', destination=[proc_type])
 
         if still_up == 0:
             print("all processes are now marked as crashed")
@@ -130,8 +118,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
             if len(status_line) > status_str_length:
                 status_str_length = len(status_line) + 1 + len(str(counter))
             print("\r%s %d".ljust(status_str_length) % (status_line, counter))
-            # play nice to heroku api
-            time.sleep(1)
+            # play nice to heroku api usually takes about 10 seconds to shutdown
+            time.sleep(10)
 
     # Now scale down...
     for hostname in worker_hostnames_to_process:
@@ -150,12 +138,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
 
 def disable_dyno(heroku_conn, heroku_app, procname):
     print("disabling dyno " + procname)
-    try:
-        heroku_app.processes[procname].scale(0)
-    except KeyError:
-        pass
-        # this means the proc isn't running - bug in heroku api methinks
-        # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
+    heroku_app.scale_formation_process(procname, 0)
 
 
 def lock_celery():
@@ -195,16 +178,7 @@ def start_dynos(proclist, after_deployment='idle'):
 
 def start_dyno(heroku_conn, heroku_app, procname):
     print("starting dyno " + procname)
-    try:
-        heroku_app.processes[procname].scale(1)
-    except KeyError:
-        # this means the prc isn't running - bug in heroku api methinks
-        # see http://samos-it.com/only-use-worker-when-required-on-heroku-with-djangopython/
-        heroku_conn._http_resource(
-            method='POST',
-            resource=('apps', settings.HEROKU_APPNAME, 'ps', 'scale'),
-            data={'type': procname, 'qty': 1}
-        )
+    heroku_app.scale_formation_process(procname, 1)
 
 
 def get_redis_queue_count(active_queues):
