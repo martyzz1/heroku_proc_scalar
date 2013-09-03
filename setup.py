@@ -11,8 +11,8 @@ setup(
     packages=find_packages(),
     keywords='celery, djcelery, heroku, autoscaling, redis, iron_mq',
     zip_safe=True,
-    install_requires=['Fabric==1.4.3', 'heroku==3.0.0', 'Django==1.4.5'],
+    install_requires=['Fabric==1.4.3', 'heroku-dev==3.0.0', 'Django==1.4.5'],
     dependency_links=[
-        'https://github.com/martyzz1/heroku.py/zipball/feature_heroku_api_v3#egg=heroku-3.0.0'
+        'https://github.com/martyzz1/heroku.py/zipball/feature_heroku_api_v3#egg=heroku-dev-3.0.0'
     ]
 )
