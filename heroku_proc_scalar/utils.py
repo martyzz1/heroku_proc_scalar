@@ -20,7 +20,7 @@ def get_heroku_conn():
     assert settings.HEROKU_API_KEY
     assert settings.HEROKU_APPNAME
     heroku_conn = heroku.from_key(settings.HEROKU_API_KEY)
-    return heroku_conn, heroku_conn.apps(settings.HEROKU_APPNAME)
+    return heroku_conn, heroku_conn.app(settings.HEROKU_APPNAME)
 
 
 def get_running_celery_workers():
