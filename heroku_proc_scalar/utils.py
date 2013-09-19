@@ -13,7 +13,7 @@ try:
     from iron_mq import IronMQ
 except ImportError:
     IronMQ = None # noqa
-    print("couldn't import iron_mq, no support for it")
+    #print("couldn't import iron_mq, no support for it")
 
 
 def get_heroku_conn():
