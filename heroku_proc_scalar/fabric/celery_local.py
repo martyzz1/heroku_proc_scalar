@@ -1,4 +1,4 @@
-from fabric.api import task, local, env
+from fabric.api import task, env
 
 
 @task
@@ -11,21 +11,18 @@ def lock_remote_for_deployment():
 def unlock_remote_after_deployment():
     cmd = "fab celery.unlock_after_deployment"
     env.app.run_command(cmd)
-    local(cmd)
 
 
 @task
 def shutdown_remote():
     cmd = "fab celery.shutdown_process_for_deployment"
     env.app.run_command(cmd)
-    local(cmd)
 
 
 @task
 def get_remote_running_processes():
     cmd = "fab celery.print_running_processes"
-    output, dyno = env.app.run_command(cmd)
-    result = local(cmd, capture=True)
+    result, dyno = env.app.run_command(cmd)
 
     print result
     lines = result.splitlines()
