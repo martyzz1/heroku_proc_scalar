@@ -16,4 +16,4 @@ redis_queue_url = urlparse(getattr(django_settings, 'BROKER_URL', None))
 
 
 assert proc_scalar_lock_url, "Please set the environment variable for PROC_SCALAR_LOCK_DB"
-assert redis_queue_url, "no redis_queue_url configured in your django settings""
+assert redis_queue_url, "no redis_queue_url configured in your django settings"
