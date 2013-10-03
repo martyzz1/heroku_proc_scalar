@@ -26,10 +26,6 @@ add the following to your django settings
 
     INSTALLED_APPS.append('heroku_proc_scalar')
 
-Export the following environment variable:
-
-    PROC_SCALAR_LOCK_DB='redis://redis.dev.local:6379/0'
-
 If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to remote scale your celery processes you will need to add the following to your apps main urls.py
 
     urlpatterns += patterns('', url(r'^', include('heroku_proc_scalar.urls')))
@@ -60,6 +56,13 @@ You can use this Environment variable to specify the Procfile you use for your s
     heroku config:set PROCFILE=./Procfile.dev
 
 It defaults to './Procfile'
+
+PROC_SCALAR_LOCK_DB
+------------
+This is used to globally controil your processes
+
+    PROC_SCALAR_LOCK_DB='redis://redis.dev.local:6379/0'
+
 
 PROCFILE
 ========
