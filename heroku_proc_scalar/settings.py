@@ -12,6 +12,6 @@ HEROKU_APPNAME = os.environ.get('HEROKU_APPNAME', False)
 HEROKU_SCALAR_SHUTDOWN_RETRY = int(os.environ.get('HEROKU_SCALAR_SHUTDOWN_RETRY', 10))
 
 proc_scalar_lock_url = urlparse(os.environ.get('PROC_SCALAR_LOCK_DB', 'redis://PLEASE_SET_YOUR_PROC_SCALAR_LOCL_DB-ENV/'))
-redis_queue_url = urlparse(getattr(django_settings, 'BROKER_URL', None))
+redis_queue_url = urlparse(getattr(django_settings, 'BROKER_URL', redis://PLEASE_SET_YOUR_BROKER_URL/'))
 
 assert redis_queue_url, "no redis_queue_url configured in your django settings"
