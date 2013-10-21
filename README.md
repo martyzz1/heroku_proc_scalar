@@ -32,7 +32,7 @@ If you wish to allow the https://github.com/martyzz1/heroku_proc_scalar_app to r
 
 You must also add the included fab commands to your main app's fabfile.py
 
-    from heroku_proc_scalar.fabfile import shutdown_celery_process, shutdown_celery_process_for_deployment
+    import heroku_proc_scalar.fabric.celery_remote as celery # noqa
 
 Environment settings
 ====================
