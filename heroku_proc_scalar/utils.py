@@ -1,7 +1,7 @@
 from __future__ import print_function
 from . import PROC_MAP, QUEUE_MAP
 from httplib import HTTPException
-from celery import current_app as celery
+from celery import current_app
 import time
 import heroku
 import redis
@@ -64,7 +64,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
     )
 
     if not len(worker_hostnames) > 0:
-        worker_hostnames = _get_worker_hostnames(celery.control)
+        worker_hostnames = _get_worker_hostnames(current_app.control)
     worker_hostnames = list(set(worker_hostnames))
     worker_hostnames_to_process = []
 
@@ -78,7 +78,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         worker_hostnames_to_process.append(hostname)
 
     if len(worker_hostnames_to_process) > 0:
-        celery.control.broadcast('shutdown', destination=worker_hostnames_to_process)
+        current_app.control.broadcast('shutdown', destination=worker_hostnames_to_process)
     else:
         return []
 
@@ -107,7 +107,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
             if counter % settings.HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
                 if still_up == 1:
                     print("shutdown of {} taking too long, re-issuing".format(proc_type))
-                    celery.control.broadcast('shutdown', destination=[proc_type])
+                    current_app.control.broadcast('shutdown', destination=[proc_type])
 
         if still_up == 0:
             print("all processes are now marked as crashed")
@@ -265,7 +265,7 @@ def get_ironmq_queue_count(active_queues):
 
 
 def get_active_queues():
-    i = celery.control.inspect([x for x in QUEUE_MAP.iterkeys()])
+    i = current_app.control.inspect([x for x in QUEUE_MAP.iterkeys()])
     active = {}
     data = {}
     try:
