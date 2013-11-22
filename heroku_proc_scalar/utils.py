@@ -1,7 +1,6 @@
 from __future__ import print_function
 from . import PROC_MAP, QUEUE_MAP
 from httplib import HTTPException
-from celery.app.control import Control
 from celery import current_app as celery
 import time
 import heroku
@@ -12,7 +11,7 @@ import settings
 try:
     from iron_mq import IronMQ
 except ImportError:
-    IronMQ = None # noqa
+    IronMQ = None  # noqa
     #print("couldn't import iron_mq, no support for it")
 
 
@@ -64,9 +63,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         password=settings.proc_scalar_lock_url.password
     )
 
-    c = Control()
     if not len(worker_hostnames) > 0:
-        worker_hostnames = _get_worker_hostnames(c)
+        worker_hostnames = _get_worker_hostnames(celery.control)
     worker_hostnames = list(set(worker_hostnames))
     worker_hostnames_to_process = []
 
