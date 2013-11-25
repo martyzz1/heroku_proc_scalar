@@ -38,16 +38,22 @@ def get_running_celery_workers():
     return workers
 
 
-def _get_worker_hostnames(control):
+def _get_worker_hostnames():
+    """
+        Creates a map of proc names and their corresponding celery hostnames.
+        E.g. {u'celery_frontend_fastQ': u'celery@celery_frontend_fastQ'}
+    """
     try:
-        hostnames = control.ping()
+        hostnames = app.control.ping()
     except (HTTPException, requests.exceptions.HTTPError):
-        return []
+        return {}
     else:
-        worker_hostnames = []
+        worker_hostnames = {}
         for h in hostnames:
-            for host, _ in h.iteritems():
-                worker_hostnames.append(host)
+            for host in h.keys():
+                parts = host.split('@')
+                key = parts[-1] if len(parts) > 1 else parts[0]
+                worker_hostnames[key] = host
         return worker_hostnames
 
 
@@ -56,6 +62,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
     # be identical to the process name. Break this and all is lost()
     # We therefore can use procname and worker_hostname interchangeably
     heroku_conn, heroku_app = get_heroku_conn()
+    all_hostnames = _get_worker_hostnames()
 
     print("shutting down celery for " + for_deployment)
 
@@ -66,12 +73,17 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         password=settings.proc_scalar_lock_url.password
     )
 
-    if not len(worker_hostnames) > 0:
-        worker_hostnames = _get_worker_hostnames(app.control)
-    worker_hostnames = list(set(worker_hostnames))
+    if not len(worker_hostnames):  # default to all
+        worker_hostnames = all_hostnames
+    else:  # pull only relevant data from the all_hostnames dict
+        hostnames = {}
+        for name in worker_hostnames:
+            if name in all_hostnames:
+                hostnames[name] = all_hostnames[name]
+        worker_hostnames = hostnames
     worker_hostnames_to_process = []
 
-    for hostname in worker_hostnames:
+    for hostname in worker_hostnames.keys():
         key = "DISABLE_CELERY_%s" % hostname
         is_already_disabled = lock.get(key)
         if not is_already_disabled == 'deployment':
@@ -81,7 +93,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         worker_hostnames_to_process.append(hostname)
 
     if len(worker_hostnames_to_process) > 0:
-        app.control.broadcast('shutdown', destination=worker_hostnames_to_process)
+        workers = [worker_hostnames[name] for name in worker_hostnames_to_process]
+        app.control.broadcast('shutdown', destination=workers)
     else:
         return []
 
@@ -110,7 +123,7 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
             if counter % settings.HEROKU_SCALAR_SHUTDOWN_RETRY == 0:
                 if still_up == 1:
                     print("shutdown of {} taking too long, re-issuing".format(proc_type))
-                    app.control.broadcast('shutdown', destination=[proc_type])
+                    app.control.broadcast('shutdown', destination=[worker_hostnames[proc_type]])
 
         if still_up == 0:
             print("all processes are now marked as crashed")
