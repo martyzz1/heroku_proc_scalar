@@ -47,7 +47,7 @@ def _get_worker_hostnames(control):
         worker_hostnames = []
         for h in hostnames:
             for host, _ in h.iteritems():
-                worker_hostnames.append('celery@%s' % host)
+                worker_hostnames.append(host)
         return worker_hostnames
 
 
