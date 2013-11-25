@@ -58,8 +58,6 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
     heroku_conn, heroku_app = get_heroku_conn()
 
     print("shutting down celery for " + for_deployment)
-    from celery.contrib import rdb
-    rdb.set_trace()
 
     lock = redis.StrictRedis(
         host=settings.proc_scalar_lock_url.hostname,
