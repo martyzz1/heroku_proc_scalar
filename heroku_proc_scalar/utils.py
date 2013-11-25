@@ -81,6 +81,8 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         worker_hostnames_to_process.append(hostname)
 
     if len(worker_hostnames_to_process) > 0:
+        print("broadcasting shutdown to %s" % worker_hostnames_to_process)
+        print("app config %s" % app._config_source)
         app.control.broadcast('shutdown', destination=worker_hostnames_to_process)
     else:
         return []
