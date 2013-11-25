@@ -47,7 +47,7 @@ def _get_worker_hostnames(control):
         worker_hostnames = []
         for h in hostnames:
             for host, _ in h.iteritems():
-                worker_hostnames.append(host)
+                worker_hostnames.append('celery@%s' % host)
         return worker_hostnames
 
 
@@ -81,8 +81,6 @@ def shutdown_celery_processes(worker_hostnames, for_deployment='idle'):
         worker_hostnames_to_process.append(hostname)
 
     if len(worker_hostnames_to_process) > 0:
-        print("broadcasting shutdown to %s" % worker_hostnames_to_process)
-        print("app config %s" % app._config_source)
         app.control.broadcast('shutdown', destination=worker_hostnames_to_process)
     else:
         return []
