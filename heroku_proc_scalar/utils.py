@@ -8,7 +8,7 @@ import redis
 import requests
 import settings
 
-app = __import__(os.environ['DJANGO_SETTINGS_MODULE'].split('.')[0]).celery.app
+app = __import__(os.environ['DJANGO_SETTINGS_MODULE'].split('.')[0], fromlist=['celery']).celery.app
 
 try:
     from iron_mq import IronMQ
