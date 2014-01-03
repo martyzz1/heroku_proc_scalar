@@ -1,7 +1,6 @@
 from __future__ import print_function
 from . import PROC_MAP, QUEUE_MAP
 from httplib import HTTPException
-from importlib import import_module
 import os
 import time
 import heroku
@@ -9,7 +8,7 @@ import redis
 import requests
 import settings
 
-app = import_module(os.environ['DJANGO_SETTINGS_MODULE'].split('.')[0]).celery.app
+app = __import__(os.environ['DJANGO_SETTINGS_MODULE'].split('.')[0]).celery.app
 
 try:
     from iron_mq import IronMQ
