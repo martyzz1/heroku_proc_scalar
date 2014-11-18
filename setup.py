@@ -14,10 +14,10 @@ setup(
     install_requires=[
         'Fabric==1.4.3',
         'celery>=3.1.0',
-        'heroku-dev>=3.0.1',
+        'heroku-dev>=3.1.0',
         'redis==2.7.5',
     ],
     dependency_links=[
-        'https://github.com/martyzz1/heroku.py/zipball/dc95800c0dbfc52d37f77d504af25bf190264eff#egg=heroku-dev-3.0.0'
+        'https://github.com/martyzz1/heroku.py/zipball/988176ed7ab83f9fca079aa60e9d6ce3ce264225#egg=heroku-dev-3.1.0'
     ]
 )
