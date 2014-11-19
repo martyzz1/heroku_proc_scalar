@@ -18,6 +18,6 @@ setup(
         'redis==2.7.5',
     ],
     dependency_links=[
-        'https://github.com/martyzz1/heroku.py/zipball/988176ed7ab83f9fca079aa60e9d6ce3ce264225#egg=heroku-dev-3.1.0'
+        'https://github.com/martyzz1/heroku.py/zipball/988176ed#egg=heroku-dev-3.1.0'
     ]
 )
