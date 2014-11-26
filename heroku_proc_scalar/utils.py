@@ -3,7 +3,7 @@ from . import PROC_MAP, QUEUE_MAP
 from httplib import HTTPException
 import os
 import time
-import heroku
+import heroku3
 import redis
 import requests
 import settings
@@ -20,7 +20,7 @@ except ImportError:
 def get_heroku_conn():
     assert settings.HEROKU_API_KEY
     assert settings.HEROKU_APPNAME
-    heroku_conn = heroku.from_key(settings.HEROKU_API_KEY)
+    heroku_conn = heroku3.from_key(settings.HEROKU_API_KEY)
     return heroku_conn, heroku_conn.app(settings.HEROKU_APPNAME)
 
 
